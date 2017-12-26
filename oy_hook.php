@@ -11,23 +11,27 @@ foreach ($oy_hook_broker as $oy_hook_unique) $oy_hook_permitted[gethostbyname($o
 
 if (!isset($oy_hook_permitted[$_SERVER['REMOTE_ADDR']])) die("PERMISSION DENIED");
 
-// Create a stream
-$opts = [
-    "http" => [
-        "method" => "POST",
-        "header" => "Content-Type:application/json\r\nX-IOTA-API-Version: 1.4\r\n",
-        "content" => array("command" => "getNodeInfo")
-    ]
-];
+if (!isset($_GET['oy_command'])||($_GET['oy_command']!="getNodeInfo"&&$_GET['oy_command']!="getNeighbors"&&$_GET['oy_command']!="getPayout")) exit;
 
-function curl($url) {
-    global $oy_hook_port;
+if ($_GET['oy_command']=="getPayout") {
+    echo $oy_hook_payout;
+    exit;
+}
+
+function curl($oy_url, $oy_command) {
+    $oy_headers = array(
+        "Content-Type:application/json",
+        "X-IOTA-API-Version: 1.4"
+    );
 
     $ch = curl_init();
 
     curl_setopt($ch, CURLOPT_HEADER, 0);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $oy_headers);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_URL, "http://127.0.0.1:".$oy_hook_port);
+    curl_setopt($ch, CURLOPT_URL, $oy_url);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, "{\"command\":\"".$oy_command."\"}");
 
     $data = curl_exec($ch);
     curl_close($ch);
@@ -35,17 +39,6 @@ function curl($url) {
     return $data;
 }
 
-//$file = file_get_contents('http://localhost:'.$oy_hook_port, false, stream_context_create($opts));
-
-var_dump(curl("http://127.0.0.1:14500"));
-
-var_dump($file);
-
-echo "PASS";
-
-
-//validates connection with broker node
-
-//provides access to local iri api
+echo curl("http://localhost:".$oy_hook_port, $_GET['oy_command']);
 
 //provides ethereum address for PRL payment
