@@ -11,14 +11,19 @@ foreach ($oy_hook_broker as $oy_hook_unique) $oy_hook_permitted[gethostbyname($o
 
 if (!isset($oy_hook_permitted[$_SERVER['REMOTE_ADDR']])) die("PERMISSION DENIED");
 
-if (!isset($_GET['oy_command'])||($_GET['oy_command']!="getNodeInfo"&&$_GET['oy_command']!="getNeighbors"&&$_GET['oy_command']!="getPayout")) exit;
+if (!isset($_GET['oy_command'])||($_GET['oy_command']!="getNodeInfo"&&$_GET['oy_command']!="getNeighbors"&&$_GET['oy_command']!="getPayout"&&$_GET['oy_command']!="getLoad")) exit;
 
 if ($_GET['oy_command']=="getPayout") {
     echo $oy_hook_payout;
     exit;
 }
 
-function curl($oy_url, $oy_command) {
+if ($_GET['oy_command']=="getLoad") {
+    //TODO needs function to detect node's current workload. Ideally with /proc/cpuinfo and a shell invocation of 'uptime'.
+    exit;
+}
+
+function oy_iri($oy_url, $oy_command) {
     $oy_headers = array(
         "Content-Type:application/json",
         "X-IOTA-API-Version: 1.4"
@@ -39,6 +44,6 @@ function curl($oy_url, $oy_command) {
     return $data;
 }
 
-echo curl("http://localhost:".$oy_hook_port, $_GET['oy_command']);
+echo oy_iri("http://localhost:".$oy_hook_port, $_GET['oy_command']);
 
 //provides ethereum address for PRL payment
