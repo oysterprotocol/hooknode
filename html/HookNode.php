@@ -6,19 +6,13 @@ require_once("requests/IriData.php");
 class HookNode
 {
 
-    public function __construct($nodeUrl, $apiVersion = '1.4', $nodeId = 'OYSTERPEARL')
+    public static function verifyRegisteredBroker($brokerIp)
     {
-    }
-
-    public static function verifyRegisteredBroker($brokerIp) {
         return true;
         /*TODO
 
-        hooknode needs to check if it knows the broker
-        for now, just pretend we do
-
-        We should report the result of this check to the broker
-        so it can either wait or move on to the next hooknode node
+        Put Arthur's stuff in here or get rid of this method and replace with
+        the new method.
 
         */
     }
@@ -76,10 +70,36 @@ class HookNode
         $command->command = "broadcastTransactions";
         $command->trytes = $trytesToBroadcast;
 
-        $req->makeRequest($command);
+        $result = $req->makeRequest($command);
+
+        if (!is_null($result) && property_exists($result, 'duration') &&
+            !property_exists($result, 'error')) {
+            self::storeTransactions($trytesToBroadcast);
+        } else {
+            throw new Exception('broadcastTransaction failed!');
+        }
     }
 
-    private static function sendResponse() {
+    private static function storeTransactions($trytes)
+    {
+        $req = new IriWrapper();
+
+        $command = new stdClass();
+        $command->command = "storeTransactions";
+        $command->trytes = $trytes;
+
+        $result = $req->makeRequest($command);
+
+        if (!is_null($result) && property_exists($result, 'duration') &&
+            !property_exists($result, 'error')) {
+            return $result;
+        } else {
+            throw new Exception('storeTransactions failed!');
+        }
+    }
+
+    private static function sendResponse()
+    {
 
     }
 }

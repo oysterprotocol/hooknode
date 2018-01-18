@@ -13,7 +13,7 @@ class IriData
     public static $minWeightMagnitude = 14;
     public static $minMinWeightMagnitude = 14;
 
-    public static $oysterSeed = 'OYSTERPRLOYSTERPRLOYSTERPRL9YSTERPRLOYSTERPRLOYSTERPRLOYSTERPRLOYSTERPRLOYSTERPRL';
+    public static $oysterSeed = 'OYSTERPRLOYSTERPRLOYSTERPRLOYSTERPRLOYSTERPRLOYSTERPRLOYSTERPRLOYSTERPRLOYSTERPRL';
     public static $oysterTag = 'OYSTERPEARL';  //will use this as the 'tag'
     public static $txValue = 0;
 

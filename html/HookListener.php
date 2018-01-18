@@ -2,6 +2,12 @@
 
 require_once("HookNode.php");
 
+/*
+ * TODOS: This falls calls a stubbed-out method that Arthur is working on.  His
+ * work should either be added into that stubbed-out method, or remove that method
+ * and replace with his method and replace the call.
+ */
+
 if (HookNode::verifyRegisteredBroker($_SERVER['REMOTE_ADDR'])) {
     $req = new stdClass();
 
@@ -18,25 +24,14 @@ if (HookNode::verifyRegisteredBroker($_SERVER['REMOTE_ADDR'])) {
 
 function processRequest($request)
 {
-    var_dump($request);
-
     if (isset($request->command)) {
 
         switch ($request->command) {
             case 'attachToTangle':
                 HookNode::attachTx($request);
                 break;
-            case 'getNodeInfo':
-                echo "getNodeInfo";
-                break;
-            case 'broadcastTransactions':
-                echo 'broadcastTransactions';
-                break;
-            case 'getNeighbors':
-                echo "getNeighbors";
-                break;
             default:
-                echo "i equals 2";
+                die("UNRECOGNIZED COMMAND");
                 break;
         }
     } else {

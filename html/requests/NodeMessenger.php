@@ -15,7 +15,7 @@ class NodeMessenger
     public function __construct()
     {
 
-        array_push($this->headers, $this->apiVersionHeaderString . $GLOBALS['apiVersion']);
+        array_push($this->headers, $this->apiVersionHeaderString . IriData::$apiVersion);
     }
 
     private function validateUrl($nodeUrl)
@@ -31,13 +31,8 @@ class NodeMessenger
         }
     }
 
-<<<<<<< HEAD
     public function sendMessageToNode($commandObject, $nodeUrl)
-=======
-    public function sendMessageToNode($nodeUrl, $commandObject)
->>>>>>> 4aba6e79cf1c908dfb854c83651b384e9a18c4b6
     {
-
         try {
             $this->validateUrl($nodeUrl);
         } catch (Exception $e) {
@@ -49,7 +44,7 @@ class NodeMessenger
         $curl = curl_init();
 
         curl_setopt_array($curl, array(
-            //CURLOPT_RETURNTRANSFER => 1,
+            CURLOPT_RETURNTRANSFER => 1,
             CURLOPT_POST => 1,
             CURLOPT_URL => $nodeUrl,
             CURLOPT_USERAGENT => $this->userAgent,
@@ -59,15 +54,9 @@ class NodeMessenger
             CURLOPT_TIMEOUT => 1000
         ));
 
-        echo $GLOBALS['nl'];
-        echo $GLOBALS['nl'] . "calling curl in nodeMessenger, url is: " . $nodeUrl . $GLOBALS['nl'];
-        echo $GLOBALS['nl'] . "payload: " . $payload . $GLOBALS['nl'];
-
         $response = json_decode(curl_exec($curl));
-        curl_close($curl);
 
-        echo $GLOBALS['nl'] . "response was: " . $GLOBALS['nl'];
-        var_dump($response);
+        curl_close($curl);
 
         return $response;
     }
