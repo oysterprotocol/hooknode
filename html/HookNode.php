@@ -24,15 +24,9 @@ class HookNode
         if (property_exists($transactionObject, 'trunkTransaction')) {
             try {
                 $trytesToBroadcast = self::attachToTangle($transactionObject);
-            } catch (Exception $e) {
-                echo "Caught exception: " . $e->getMessage() . $GLOBALS['nl'];
-                return;
-            }
-        }
-
-        if ($trytesToBroadcast != NULL) {
-            try {
-                self::broadcastTransactions($trytesToBroadcast);
+                if ($trytesToBroadcast != NULL) {
+                    self::broadcastTransactions($trytesToBroadcast);
+                }
             } catch (Exception $e) {
                 echo "Caught exception: " . $e->getMessage() . $GLOBALS['nl'];
                 return;
@@ -96,10 +90,5 @@ class HookNode
         } else {
             throw new Exception('storeTransactions failed!');
         }
-    }
-
-    private static function sendResponse()
-    {
-
     }
 }
