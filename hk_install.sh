@@ -7,7 +7,7 @@ sudo apt-get -y install nginx
 sudo apt-get -y install php-fpm
 sudo apt-get -y install php-curl
 
-#install node (for Nelson)
+#install node.js (for Nelson)
 curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
 sudo apt-get -y install -y nodejs
 
@@ -73,7 +73,7 @@ RESCAN_DB = false
 REMOTE_LIMIT_API = "interruptAttachingToTangle, attachToTangle, setApiRateLimit"
 #We don't need to add normal neighbors as we're going to be using Nelson
 EOF
-#Download the last known Tangle database, run on bg and detached
+#Download the last known Tangle database
 cd /tmp/ && curl -LO http://db.iota.partners/IOTA.partners-mainnetdb.tar.gz && sudo -u iota tar xzfv /tmp/IOTA.partners-mainnetdb.tar.gz -C /home/iota/node/mainnetdb && rm /tmp/IOTA.partners-mainnetdb.tar.gz
 #install Nelson
 sudo npm install -g nelson.cli
