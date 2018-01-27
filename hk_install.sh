@@ -7,7 +7,7 @@ sudo apt-get -y install nginx
 sudo apt-get -y install php-fpm
 sudo apt-get -y install php-curl
 
-#install node (for Nelson)
+#install node.js (for Nelson)
 curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
 sudo apt-get -y install -y nodejs
 
@@ -76,7 +76,7 @@ EOF
 #Download the last known Tangle database
 cd /tmp/ && curl -LO http://db.iota.partners/IOTA.partners-mainnetdb.tar.gz && sudo -u iota tar xzfv /tmp/IOTA.partners-mainnetdb.tar.gz -C /home/iota/node/mainnetdb && rm /tmp/IOTA.partners-mainnetdb.tar.gz
 #install Nelson
-npm install -g nelson.cli
+sudo npm install -g nelson.cli
 #start the IOTA service
 sudo service iota start
 systemctl enable iota.service
@@ -96,3 +96,14 @@ sudo rm -rf /var/www/html
 sudo ln -s /home/oyster/hooknode/html /var/www/html
 sudo cp /home/oyster/hooknode/nginx.conf /etc/nginx/
 sudo service nginx restart
+
+#get public ip
+ips="$(dig +short myip.opendns.com @resolver1.opendns.com)"
+
+
+#prepare and show confirmation message
+endmsg1="Installation finished, your hooknode is set up at http://"
+endmsg2=":250/HookNode.php"
+echo $endmsg1$ips$endmsg2
+
+# - we need to move the node to https
