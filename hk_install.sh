@@ -79,7 +79,12 @@ cd /tmp/ && curl -LO http://db.iota.partners/IOTA.partners-mainnetdb.tar.gz && s
 npm install -g nelson.cli
 #start the IOTA service
 sudo service iota start
+systemctl enable iota.service
 #configure auto updates for IRI 
 echo '*/15 * * * * root bash -c "bash <(curl -s https://gist.githubusercontent.com/zoran/48482038deda9ce5898c00f78d42f801/raw)"' | sudo tee /etc/cron.d/iri_updater > /dev/null
-#Start Nelson
-nelson --gui --getNeighbors
+
+#Start Nelson with pm2
+npm install pm2 -g
+pm2 startup
+pm2 start nelson -- --getNeighbors
+pm2 save
