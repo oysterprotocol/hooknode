@@ -24,13 +24,14 @@ sudo -u iota wget -O /home/iota/node/iri-1.4.1.7.jar https://github.com/iotaledg
 #find RAM, in MB
 phymem=$(awk -F":" '$1~/MemTotal/{print $2}' /proc/meminfo )
 phymem=${phymem:0:-2}
-phymem=$(($phymem/1000))
+#allot about 75% of RAM to java
+phymem=$((($phymem/1333) + ($phymem % 1333 > 0)))
 xmx="Xmx"
 xmx_end="m"
 xmx=$xmx$phymem$xmx_end
 
 #set up Systemd service
-cat << "EOF" | sudo tee /lib/systemd/system/iota.service
+cat <<EOF | sudo tee /lib/systemd/system/iota.service
 [Unit]
 Description=IOTA (IRI) full node
 After=network.target
@@ -45,8 +46,7 @@ ExecReload=/bin/kill -HUP $MAINPID
 KillMode=mixed
 KillSignal=SIGTERM
 TimeoutStopSec=60
-#3000m suitable for 4GB RAM instance
-ExecStart=/usr/bin/java -Xmx3000m -Djava.net.preferIPv4Stack=true -jar iri-1.4.1.7.jar -c iota.ini
+ExecStart=/usr/bin/java -$xmx -Djava.net.preferIPv4Stack=true -jar iri-1.4.1.7.jar -c iota.ini
 SyslogIdentifier=IRI
 Restart=on-failure
 RestartSec=30
