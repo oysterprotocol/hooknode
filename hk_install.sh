@@ -84,7 +84,7 @@ systemctl enable iota.service
 echo '*/15 * * * * root bash -c "bash <(curl -s https://gist.githubusercontent.com/zoran/48482038deda9ce5898c00f78d42f801/raw)"' | sudo tee /etc/cron.d/iri_updater > /dev/null
 
 #Start Nelson with pm2
-npm install pm2 -g
-pm2 startup
-pm2 start nelson -- --getNeighbors
-pm2 save
+sudo npm install pm2 -g
+sudo pm2 startup
+sudo pm2 start nelson -- --getNeighbors
+sudo pm2 save
