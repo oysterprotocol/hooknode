@@ -101,8 +101,8 @@ sudo cp /home/oyster/hooknode/nginx.conf /etc/nginx/
 sudo service nginx restart
 
 #get public ip
-ips=$(ip -o addr show up primary scope global |
-      while read -r num dev fam addr rest; do echo ${addr%/*}; done)
+ips="$(dig +short myip.opendns.com @resolver1.opendns.com)"
+
 
 #prepare and show confirmation message
 endmsg1="Installation finished, your hooknode is set up at http://"
