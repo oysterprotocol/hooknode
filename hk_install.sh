@@ -74,7 +74,7 @@ REMOTE_LIMIT_API = "interruptAttachingToTangle, attachToTangle, setApiRateLimit"
 #We don't need to add normal neighbors as we're going to be using Nelson
 EOF
 #Download the last known Tangle database, run on bg and detached
-nohup cd /tmp/ && curl -LO http://db.iota.partners/IOTA.partners-mainnetdb.tar.gz && sudo -u iota tar xzfv /tmp/IOTA.partners-mainnetdb.tar.gz -C /home/iota/node/mainnetdb && rm /tmp/IOTA.partners-mainnetdb.tar.gz &
+cd /tmp/ && curl -LO http://db.iota.partners/IOTA.partners-mainnetdb.tar.gz && sudo -u iota tar xzfv /tmp/IOTA.partners-mainnetdb.tar.gz -C /home/iota/node/mainnetdb && rm /tmp/IOTA.partners-mainnetdb.tar.gz
 #install Nelson
 npm install -g nelson.cli
 #start the IOTA service
