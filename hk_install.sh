@@ -105,6 +105,8 @@ ips=$(ip -o addr show up primary scope global |
       while read -r num dev fam addr rest; do echo ${addr%/*}; done)
 
 #prepare and show confirmation message
-endmsg1="Installation finished, your hooknode is set up at https://"
+endmsg1="Installation finished, your hooknode is set up at http://"
 endmsg2=":250/HookNode.php"
 echo $endmsg1$ips$endmsg2
+
+# - we need to move the node to https
