@@ -76,7 +76,7 @@ EOF
 #Download the last known Tangle database, run on bg and detached
 cd /tmp/ && curl -LO http://db.iota.partners/IOTA.partners-mainnetdb.tar.gz && sudo -u iota tar xzfv /tmp/IOTA.partners-mainnetdb.tar.gz -C /home/iota/node/mainnetdb && rm /tmp/IOTA.partners-mainnetdb.tar.gz
 #install Nelson
-npm install -g nelson.cli
+sudo npm install -g nelson.cli
 #start the IOTA service
 sudo service iota start
 systemctl enable iota.service
