@@ -100,5 +100,11 @@ sudo ln -s /home/oyster/hooknode/html /var/www/html
 sudo cp /home/oyster/hooknode/nginx.conf /etc/nginx/
 sudo service nginx restart
 
-#show confirmation message
-echo "Installation finished, your node should be running on http://(PUBLIC IP):250/HookNode.php"
+#get public ip
+ips=$(ip -o addr show up primary scope global |
+      while read -r num dev fam addr rest; do echo ${addr%/*}; done)
+
+#prepare and show confirmation message
+endmsg1="Installation finished, your hooknode is set up at https://"
+endmsg2=":250/HookNode.php"
+echo $endmsg1$ips$endmsg2
