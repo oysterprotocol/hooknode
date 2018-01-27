@@ -88,3 +88,11 @@ sudo npm install pm2 -g
 sudo pm2 startup
 sudo pm2 start nelson -- --getNeighbors
 sudo pm2 save
+
+#Install hooknode service
+sudo mkdir -p /home/oyster/hooknode
+sudo git clone https://github.com/oysterprotocol/hooknode.git /home/oyster/hooknode
+sudo rm -rf /var/www/html
+sudo ln -s /home/oyster/hooknode/html /var/www/html
+sudo cp /home/oyster/hooknode/nginx.conf /etc/nginx/
+sudo service nginx restart
