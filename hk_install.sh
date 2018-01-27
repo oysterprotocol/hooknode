@@ -99,3 +99,6 @@ sudo rm -rf /var/www/html
 sudo ln -s /home/oyster/hooknode/html /var/www/html
 sudo cp /home/oyster/hooknode/nginx.conf /etc/nginx/
 sudo service nginx restart
+
+#show confirmation message
+echo "Installation finished, your node should be running on http://(PUBLIC IP):250/HookNode.php"
