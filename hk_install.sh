@@ -1,18 +1,18 @@
 #!/bin/bash
 
 #install php and dependencies
-apt-get update
-apt-get install php
-apt-get install nginx
-apt-get install php-fpm
-apt-get install php-curl
+sudo apt-get update
+sudo apt-get -y install php
+sudo apt-get -y install nginx
+sudo apt-get -y install php-fpm
+sudo apt-get -y install php-curl
 
 #install node (for Nelson)
 curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
-sudo apt-get install -y nodejs
+sudo apt-get -y install -y nodejs
 
 #install IRI
-sudo apt install software-properties-common -y && sudo add-apt-repository ppa:webupd8team/java -y && sudo apt update && sudo apt install oracle-java8-installer curl wget jq git -y && sudo apt install oracle-java8-set-default -y
+sudo apt-get -y install software-properties-common -y && sudo add-apt-repository ppa:webupd8team/java -y && sudo apt update && sudo apt install oracle-java8-installer curl wget jq git -y && sudo apt install oracle-java8-set-default -y
 sudo sh -c 'echo JAVA_HOME="/usr/lib/jvm/java-8-oracle" >> /etc/environment' && source /etc/environment
 sudo useradd -s /usr/sbin/nologin -m iota
 sudo -u iota mkdir -p /home/iota/node /home/iota/node/ixi /home/iota/node/mainnetdb
