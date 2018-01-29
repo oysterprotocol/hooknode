@@ -19,7 +19,15 @@ sudo apt-get -y install software-properties-common -y && sudo add-apt-repository
 sudo sh -c 'echo JAVA_HOME="/usr/lib/jvm/java-8-oracle" >> /etc/environment' && source /etc/environment
 sudo useradd -s /usr/sbin/nologin -m iota
 sudo -u iota mkdir -p /home/iota/node /home/iota/node/ixi /home/iota/node/mainnetdb
-sudo -u iota wget -O /home/iota/node/iri-1.4.2.0.jar https://github.com/iotaledger/iri/releases/download/v1.4.2.0/iri-1.4.2.0.jar
+#find latest IRI release 
+LATEST_RELEASE=$(curl -L -s -H 'Accept: application/json' https://github.com/iotaledger/iri/releases/latest)
+# The releases are returned in the format {"id":7789623,"tag_name":"iri-1.4.1.7",...}, we have to extract the tag_name.
+LATEST_VERSION=$(echo $LATEST_RELEASE | sed -e 's/.*"tag_name":"\([^"]*\)".*/\1/')
+lv_nov=${LATEST_VERSION:1}
+iri_v="iri-"$lv_nov".jar"
+IRI_URL="https://github.com/iotaledger/iri/releases/download/"$LATEST_VERSION"/"$iri_v
+dir_iri="/home/iota/node/"$iri_v
+sudo -u iota wget -O $dir_iri $IRI_URL
 
 #find RAM, in MB
 phymem=$(awk -F":" '$1~/MemTotal/{print $2}' /proc/meminfo )
