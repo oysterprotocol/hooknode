@@ -1,7 +1,7 @@
 <?php
 
 require_once("HookNode.php");
-require_once("Metrics.php");
+require_once("metrics.php");
 
 /*
  * TODOS: This calls a stubbed-out method that Arthur is working on.  His
