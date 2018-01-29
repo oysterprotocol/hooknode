@@ -1,6 +1,7 @@
 <?php
 
 require_once("HookNode.php");
+require_once("Metrics.php");
 
 /*
  * TODOS: This calls a stubbed-out method that Arthur is working on.  His
@@ -29,6 +30,9 @@ function processRequest($request)
         switch ($request->command) {
             case 'attachToTangle':
                 HookNode::attachTx($request);
+                break;
+            case 'getMetrics':
+                Metrics::getLoadReport();
                 break;
             default:
                 die("UNRECOGNIZED COMMAND");
