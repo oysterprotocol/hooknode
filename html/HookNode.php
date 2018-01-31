@@ -26,6 +26,14 @@ class HookNode
                 $trytesToBroadcast = self::attachToTangle($transactionObject);
                 if ($trytesToBroadcast != NULL) {
                     self::broadcastTransactions($trytesToBroadcast);
+                    sleep(5);
+                    self::broadcastTransactions($trytesToBroadcast);
+                    sleep(5);
+                    self::broadcastTransactions($trytesToBroadcast);
+                    sleep(5);
+                    self::broadcastTransactions($trytesToBroadcast);
+                    sleep(5);
+                    self::broadcastTransactions($trytesToBroadcast);
                 }
             } catch (Exception $e) {
                 echo "Caught exception: " . $e->getMessage() . $GLOBALS['nl'];
