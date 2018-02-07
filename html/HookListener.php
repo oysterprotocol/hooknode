@@ -17,7 +17,7 @@ if (HookNode::verifyRegisteredBroker($_SERVER['REMOTE_ADDR'])) {
 
     $my_file = '/home/OUTPUT.txt';
     $handle = fopen($my_file, 'a') or die('Cannot open file:  '.$my_file);
-    $data = "Request! \n";
+    $data = "Request TEST! \n";
     $data .= var_export($req, true);
 //
 //    foreach ($_POST as $key => $value ) {
