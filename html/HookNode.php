@@ -58,8 +58,18 @@ class HookNode
         $resultOfAttach = $req->makeRequest($command);
 
         if (!is_null($resultOfAttach) && property_exists($resultOfAttach, 'trytes')) {
+            $my_file = '/home/OUTPUT.txt';
+            $handle = fopen($my_file, 'a') or die('Cannot open file:  '.$my_file);
+            $data = "Attached to tangle with this result! \n";
+            $data .= implode("\n\n", $resultOfAttach->trytes);
+            fwrite($handle, $data);
             return $resultOfAttach->trytes;
         } else {
+            $my_file = '/home/OUTPUT.txt';
+            $handle = fopen($my_file, 'a') or die('Cannot open file:  '. $my_file);
+            $data = "Attached to tangle failed! \n";
+            $data .= $resultOfAttach;
+            fwrite($handle, $data);
             throw new Exception('attachToTangle failed!');
         }
     }
@@ -76,6 +86,10 @@ class HookNode
 
         if (!is_null($result) && property_exists($result, 'duration') &&
             !property_exists($result, 'error')) {
+            $my_file = '/home/OUTPUT.txt';
+            $handle = fopen($my_file, 'a') or die('Cannot open file:  '.$my_file);
+            $data = "Broadcasted! \n";
+            fwrite($handle, $data);
             self::storeTransactions($trytesToBroadcast);
         } else {
             throw new Exception('broadcastTransaction failed!');
@@ -94,6 +108,10 @@ class HookNode
 
         if (!is_null($result) && property_exists($result, 'duration') &&
             !property_exists($result, 'error')) {
+            $my_file = '/home/OUTPUT.txt';
+            $handle = fopen($my_file, 'a') or die('Cannot open file:  '.$my_file);
+            $data = "Stored! \n";
+            fwrite($handle, $data);
             return $result;
         } else {
             throw new Exception('storeTransactions failed!');

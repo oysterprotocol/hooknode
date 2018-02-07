@@ -11,11 +11,29 @@ require_once("HookNode.php");
 if (HookNode::verifyRegisteredBroker($_SERVER['REMOTE_ADDR'])) {
     $req = new stdClass();
 
-    foreach ($_POST as $key => $value ) {
-        $req->$key = $value;
-    }
+    $request_body = file_get_contents('php://input');
+    $req = json_decode($request_body);
 
-    $req->responseAddress = $_SERVER['REMOTE_ADDR'] . ':' .  $_SERVER['REMOTE_PORT'];
+
+    $my_file = '/home/OUTPUT.txt';
+    $handle = fopen($my_file, 'a') or die('Cannot open file:  '.$my_file);
+    $data = "Request! \n";
+    $data .= var_export($req, true);
+//
+//    foreach ($_POST as $key => $value ) {
+//        $req->$key = $value;
+//        $data .= "key: \n";
+//        $data .= $key . "\n";
+//    }
+
+//    $data .= "\nTrytes is \n:";
+//    $data .= implode("\n", $_POST['trytes']);
+//    $data .= "\nType of trytes is: \n";
+//    $data .= gettype($_POST['trytes']);
+
+    fwrite($handle, $data);
+
+    //$req->responseAddress = $_SERVER['REMOTE_ADDR'] . ':' .  $_SERVER['REMOTE_PORT'];
 
     processRequest($req);
 } else {
