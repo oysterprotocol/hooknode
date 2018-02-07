@@ -46,7 +46,18 @@ class IriWrapper
 
     public function makeRequest($commandObject)
     {
+        // DELETE THIS
+        $my_file = '/home/OUTPUT.txt';
+        $handle = fopen($my_file, 'a') or die('Cannot open file:  '.$my_file);
+        $data = "\n\n\n=========== IriWrapper::makeRequest! cmd =============\n";
+        $data .= var_export($commandObject, true);
+        $data = "\n========================\n";
+
         $payload = json_encode($commandObject);
+
+        $data .= var_export($payload, true);
+        $data .= "\n=========== IriWrapper::makeRequest! cmd =============\n\n\n";
+
 
         $curl = curl_init();
 
@@ -61,7 +72,7 @@ class IriWrapper
             CURLOPT_TIMEOUT => 1000
         ));
 
-                // DELETE THIS
+        // DELETE THIS
         $my_file = '/home/OUTPUT.txt';
         $handle = fopen($my_file, 'a') or die('Cannot open file:  '.$my_file);
         $data = "\n\n\n=========== IriWrapper::makeRequest! cmd =============\n";
