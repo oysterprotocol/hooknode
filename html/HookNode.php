@@ -64,15 +64,15 @@ class HookNode
         $command->branchTransaction = $transactionObject->branchTransaction;
         $command->trytes = $transactionObject->trytes;
 
+        $resultOfAttach = $req->makeRequest($command);
+
         // DELETE THIS
         $my_file = '/home/OUTPUT.txt';
         $handle = fopen($my_file, 'a') or die('Cannot open file:  '.$my_file);
         $data = "\n\n\n=========== attachToTangle! cmd =============\n";
-        $data .= var_export($command, true);
+        $data .= var_export($resultOfAttach, true);
         $data .= "\n=========== attachToTangle! cmd =============\n\n\n";
         fwrite($handle, $data);
-
-        $resultOfAttach = $req->makeRequest($command);
 
         if (!is_null($resultOfAttach) && property_exists($resultOfAttach, 'trytes')) {
             $my_file = '/home/OUTPUT.txt';
