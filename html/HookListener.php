@@ -13,7 +13,7 @@ if (HookNode::verifyRegisteredBroker($_SERVER['REMOTE_ADDR'])) {
 
     $request_body = file_get_contents('php://input');
     $req = json_decode($request_body);
-
+    $req->responseAddress = $_SERVER['REMOTE_ADDR'] . ':' .  $_SERVER['REMOTE_PORT'];
 
     $my_file = '/home/OUTPUT.txt';
     $handle = fopen($my_file, 'a') or die('Cannot open file:  '.$my_file);
@@ -33,7 +33,6 @@ if (HookNode::verifyRegisteredBroker($_SERVER['REMOTE_ADDR'])) {
 
     fwrite($handle, $data);
 
-    //$req->responseAddress = $_SERVER['REMOTE_ADDR'] . ':' .  $_SERVER['REMOTE_PORT'];
 
     processRequest($req);
 } else {

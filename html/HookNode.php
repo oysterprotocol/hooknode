@@ -25,6 +25,15 @@ class HookNode
             try {
                 $trytesToBroadcast = self::attachToTangle($transactionObject);
                 if ($trytesToBroadcast != NULL) {
+
+                    // DELETE THIS
+                    $my_file = '/home/OUTPUT.txt';
+                    $handle = fopen($my_file, 'a') or die('Cannot open file:  '.$my_file);
+                    $data = "\n\n=========== attachTx! =============\n";
+                    $data .= var_export($trytes, true);
+                    $data .= "\n=========== attachTx! =============\n\n";
+                    fwrite($handle, $data);
+
                     self::broadcastTransactions($trytesToBroadcast);
                     sleep(5);
                     self::broadcastTransactions($trytesToBroadcast);
@@ -44,6 +53,14 @@ class HookNode
 
     private static function attachToTangle($transactionObject)
     {
+        // DELETE THIS
+        $my_file = '/home/OUTPUT.txt';
+        $handle = fopen($my_file, 'a') or die('Cannot open file:  '.$my_file);
+        $data = "\n\n=========== attachToTangle! =============\n";
+        $data .= var_export($transactionObject, true);
+        $data .= "\n=========== attachToTangle! =============\n\n";
+        fwrite($handle, $data);
+
         $req = new IriWrapper();
 
         $command = new stdClass();
