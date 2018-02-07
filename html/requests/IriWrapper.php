@@ -61,6 +61,15 @@ class IriWrapper
             CURLOPT_TIMEOUT => 1000
         ));
 
+                // DELETE THIS
+        $my_file = '/home/OUTPUT.txt';
+        $handle = fopen($my_file, 'a') or die('Cannot open file:  '.$my_file);
+        $data = "\n\n\n=========== IriWrapper::makeRequest! cmd =============\n";
+        $data .= var_export($payload, true);
+        $data = "\n========================\n";
+        $data .= var_export($this, true);
+        $data .= "\n=========== IriWrapper::makeRequest! cmd =============\n\n\n";
+
         $response = json_decode(curl_exec($curl));
 
         curl_close($curl);
