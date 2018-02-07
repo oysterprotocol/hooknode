@@ -53,14 +53,6 @@ class HookNode
 
     private static function attachToTangle($transactionObject)
     {
-        // DELETE THIS
-        $my_file = '/home/OUTPUT.txt';
-        $handle = fopen($my_file, 'a') or die('Cannot open file:  '.$my_file);
-        $data = "\n\n=========== attachToTangle! =============\n";
-        $data .= var_export($transactionObject, true);
-        $data .= "\n=========== attachToTangle! =============\n\n";
-        fwrite($handle, $data);
-
         $req = new IriWrapper();
 
         $command = new stdClass();
@@ -71,6 +63,14 @@ class HookNode
         $command->trunkTransaction = $transactionObject->trunkTransaction;
         $command->branchTransaction = $transactionObject->branchTransaction;
         $command->trytes = $transactionObject->trytes;
+
+        // DELETE THIS
+        $my_file = '/home/OUTPUT.txt';
+        $handle = fopen($my_file, 'a') or die('Cannot open file:  '.$my_file);
+        $data = "\n\n\n=========== attachToTangle! cmd =============\n";
+        $data .= var_export($command, true);
+        $data .= "\n=========== attachToTangle! cmd =============\n\n\n";
+        fwrite($handle, $data);
 
         $resultOfAttach = $req->makeRequest($command);
 
