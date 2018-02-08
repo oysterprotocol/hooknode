@@ -13,35 +13,8 @@ class IriWrapper
 
     public function __construct()
     {
-        /*$nodeUrl is expected in the following format:
-            http://1.2.3.4:14265  (if using IP)
-                or
-            http://host:14265  (if using host)
-        */
-        try {
-            $this->validateUrl(IriData::$nodeUrl);
-            array_push($this->headers, $this->apiVersionHeaderString . IriData::$apiVersion);
-            $this->nodeUrl = IriData::$nodeUrl;
-        } catch (Exception $e) {
-            echo 'Caught exception: ' . $e->getMessage() . $GLOBALS['nl'];
-        }
-    }
-
-    private function validateUrl($nodeUrl)
-    {
-        $http = "((http)\:\/\/)"; // starts with http://
-        $port = "(\:[0-9]{2,5})"; // ends with :(port)
-
-        /*TODOS
-        If we decide to add authentication to urls, add auth tokens to regex test.
-        Probably not needed for testnet A.
-        */
-
-        if (preg_match("/^$http/", $nodeUrl) && preg_match("/$port$/", $nodeUrl)) {
-            return true;
-        } else {
-            throw new Exception('Invalid URL.');
-        }
+        array_push($this->headers, $this->apiVersionHeaderString . IriData::$apiVersion);
+        $this->nodeUrl = IriData::$nodeUrl;
     }
 
     public function makeRequest($commandObject)

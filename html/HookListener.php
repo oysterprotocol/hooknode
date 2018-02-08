@@ -9,12 +9,9 @@ require_once("HookNode.php");
  */
 
 if (HookNode::verifyRegisteredBroker($_SERVER['REMOTE_ADDR'])) {
-    $req = new stdClass();
 
-    foreach ($_POST as $key => $value ) {
-        $req->$key = $value;
-    }
-
+    $request_body = file_get_contents('php://input');
+    $req = json_decode($request_body);
     $req->responseAddress = $_SERVER['REMOTE_ADDR'] . ':' .  $_SERVER['REMOTE_PORT'];
 
     processRequest($req);

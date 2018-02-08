@@ -4,7 +4,6 @@ require_once("IriData.php");
 
 class NodeMessenger
 {
-
     private $headers = array(
         'Content-Type: application/x-www-form-urlencoded',
     );
@@ -14,31 +13,11 @@ class NodeMessenger
 
     public function __construct()
     {
-
         array_push($this->headers, $this->apiVersionHeaderString . IriData::$apiVersion);
-    }
-
-    private function validateUrl($nodeUrl)
-    {
-
-        $http = "((http)\:\/\/)"; // starts with http://
-        $port = "(\:[0-9]{2,5})"; // ends with a port
-
-        if (preg_match("/^$http/", $nodeUrl) && preg_match("/$port$/", $nodeUrl)) {
-            return true;
-        } else {
-            throw new Exception('Invalid URL.');
-        }
     }
 
     public function sendMessageToNode($commandObject, $nodeUrl)
     {
-        try {
-            $this->validateUrl($nodeUrl);
-        } catch (Exception $e) {
-            echo 'Caught exception: ' . $e->getMessage() . $GLOBALS['nl'];
-        }
-
         $payload = http_build_query($commandObject);
 
         $curl = curl_init();
@@ -59,11 +38,6 @@ class NodeMessenger
         curl_close($curl);
 
         return $response;
-    }
-
-    public function sendMessageToClient($commandObject, $url)
-    {
-
     }
 }
 

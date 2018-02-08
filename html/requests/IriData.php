@@ -14,7 +14,7 @@ class IriData
     public static $minMinWeightMagnitude = 14;
 
     public static $oysterSeed = 'OYSTERPRLOYSTERPRLOYSTERPRLOYSTERPRLOYSTERPRLOYSTERPRLOYSTERPRLOYSTERPRLOYSTERPRL';
-    public static $oysterTag = 'OYSTERPEARL';  //will use this as the 'tag'
+    public static $oysterTag = '';  //will use this as the 'tag'
     public static $txValue = 0;
 
     public static $maxIRICallAttempts = 50;  //we need to discuss this
