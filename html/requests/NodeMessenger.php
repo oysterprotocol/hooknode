@@ -4,7 +4,6 @@ require_once("IriData.php");
 
 class NodeMessenger
 {
-
     private $headers = array(
         'Content-Type: application/x-www-form-urlencoded',
     );
