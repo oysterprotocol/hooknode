@@ -47,7 +47,7 @@ function processRequest($request)
             case 'attachToTangle':
                 HookNode::attachTx($request);
                 sleep(45);
-                HookNode::attachTx($request);  // for good measure
+                //HookNode::attachTx($request);  // for good measure
                 break;
             default:
                 die("UNRECOGNIZED COMMAND");
