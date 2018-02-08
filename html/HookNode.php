@@ -30,7 +30,7 @@ class HookNode
                     $my_file = '/home/OUTPUT.txt';
                     $handle = fopen($my_file, 'a') or die('Cannot open file:  '.$my_file);
                     $data = "\n\n=========== attachTx! =============\n";
-                    $data .= var_export($trytes, true);
+                    $data .= var_export($trytesToBroadcast, true);
                     $data .= "\n=========== attachTx! =============\n\n";
                     fwrite($handle, $data);
 
@@ -73,11 +73,9 @@ class HookNode
         $resultOfAttach = $req->makeRequest($command);
 
         // DELETE THIS
-        $my_file = '/home/OUTPUT.txt';
-        $handle = fopen($my_file, 'a') or die('Cannot open file:  '.$my_file);
-        $data = "\n\n\n=========== attachToTangle! cmd =============\n";
+        $data .= "\n\n\n=========== attachToTangle! RESULT =============\n";
         $data .= var_export($resultOfAttach, true);
-        $data .= "\n=========== attachToTangle! cmd =============\n\n\n";
+        $data .= "\n=========== attachToTangle! RESULT =============\n\n\n";
         fwrite($handle, $data);
 
         if (!is_null($resultOfAttach) && property_exists($resultOfAttach, 'trytes')) {
