@@ -3,7 +3,7 @@ import IOTA from "iota.lib.js";
 const CONFIG = Object.freeze({
   PROVIDER: new IOTA({ provider: "http://localhost:14265" }),
   MIN_DEPTH: 1,
-  MIN_WEIGHT_MAGNITUDE: 14
+  MIN_WEIGHT_MAGNITUDE: 14,
 });
 
 export const legacy = (req, res) => {
@@ -19,6 +19,6 @@ export const legacy = (req, res) => {
     (err, txs) => {
       if (err) return res.status(500).send(err);
       return res.status(200).send(txs);
-    }
+    },
   );
 };
