@@ -4,10 +4,8 @@ import app from "./app";
  * Start Express server.
  */
 app.listen(app.get("port"), () => {
-  console.log(
-    "  App is running at http://localhost:%d in %s mode",
-    app.get("port"),
-    app.get("env"),
+  process.stdout.write(
+    `Running on http://localhost:${app.get("port")} in ${app.get("env")}`,
   );
-  console.log("  Press CTRL-C to stop\n");
+  process.stdout.write("Press CTRL-C to stop\n");
 });
