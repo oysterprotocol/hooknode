@@ -12,13 +12,8 @@ export const legacy = (req, res) => {
   const { trytes } = req.body;
   const { PROVIDER, MIN_DEPTH, MIN_WEIGHT_MAGNITUDE } = CONFIG;
 
-  PROVIDER.api.sendTrytes(
-    trytes,
-    MIN_DEPTH,
-    MIN_WEIGHT_MAGNITUDE,
-    (err, txs) => {
-      if (err) return res.status(500).send(err);
-      return res.status(200).send(txs);
-    },
-  );
+  PROVIDER.api.sendTrytes(trytes, MIN_DEPTH, MIN_WEIGHT_MAGNITUDE);
+
+  // Async response
+  res.status(204).send("success");
 };
