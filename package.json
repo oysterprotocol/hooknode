@@ -4,7 +4,15 @@
   "description": "",
   "scripts": {
     "start": "NODE_ENV=production ./node_modules/nodemon/bin/nodemon.js ./src/server.js --exec babel-node --presets es2015,stage-2",
-    "watch": "./node_modules/nodemon/bin/nodemon.js ./src/server.js --exec babel-node --presets es2015,stage-2"
+    "watch": "./node_modules/nodemon/bin/nodemon.js ./src/server.js --exec babel-node --presets es2015,stage-2",
+    "precommit": "lint-staged"
+  },
+  "lint-staged": {
+    "*.{js,css,md}": [
+      "./node_modules/prettier/bin-prettier.js --write",
+      "./node_modules/eslint/bin/eslint.js --fix",
+      "git add"
+    ]
   },
   "repository": {
     "type": "git",
@@ -30,6 +38,8 @@
     "eslint-plugin-jsx-a11y": "^6.0.3",
     "eslint-plugin-prettier": "^2.6.0",
     "eslint-plugin-react": "^7.6.1",
+    "husky": "^0.14.3",
+    "lint-staged": "^6.1.0",
     "nodemon": "^1.14.12",
     "prettier": "^1.10.2",
     "prettier-eslint": "^8.8.1"
