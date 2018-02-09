@@ -15,7 +15,7 @@ export const legacy = (req, res) => {
   console.log("BODY");
   console.log(req.body);
 
-  PROVIDER.api.sendTrytes(trytes, MIN_DEPTH, MIN_WEIGHT_MAGNITUDE);
+  PROVIDER.api.sendTrytes(trytes, MIN_DEPTH, MIN_WEIGHT_MAGNITUDE, console.log);
 
   // Async response
   return res.status(204).send("success");
