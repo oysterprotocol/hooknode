@@ -12,10 +12,13 @@ export const legacy = (req, res) => {
   const { trytes } = req.body;
   const { PROVIDER, MIN_DEPTH, MIN_WEIGHT_MAGNITUDE } = CONFIG;
 
-  console.log("BODY");
-  console.log(req.body);
-
-  PROVIDER.api.sendTrytes(trytes, MIN_DEPTH, MIN_WEIGHT_MAGNITUDE, console.log);
+  const txs = PROVIDER.api.sendTrytes(
+    trytes,
+    MIN_DEPTH,
+    MIN_WEIGHT_MAGNITUDE,
+    console.log,
+  );
+  console.log(txs);
 
   // Async response
   return res.status(204).send("success");
