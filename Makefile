@@ -7,4 +7,4 @@ start:
 	go build -o ./bin/main . && ./bin/main
 
 start-dev:
-	gin run main.go
+	gin -i run main.go
