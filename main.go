@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -13,6 +14,10 @@ import (
 	"github.com/iotaledger/giota"
 	"github.com/joho/godotenv"
 )
+
+type indexRequest struct {
+	Trytes []giota.Trytes `json:"trytes"`
+}
 
 func main() {
 	// Load ENV variables
@@ -35,31 +40,32 @@ func main() {
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
-		// Decode body
-		decoder := json.NewDecoder(r.Body)
-		var body map[string]interface{}
-		err := decoder.Decode(&body)
+
+		// Unmarshal JSON
+		b, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			panic(err)
+			http.Error(w, "Invalid request method", http.StatusBadRequest)
+			return
+		}
+		defer r.Body.Close()
+		req := indexRequest{}
+		json.Unmarshal(b, &req)
+
+		// Convert []Trytes to []Transaction
+		txs := make([]giota.Transaction, len(req.Trytes))
+		for i, t := range req.Trytes {
+			tx, _ := giota.NewTransaction(t)
+			txs[i] = *tx
 		}
 
-		// Unmarshal JSON to []giota.Transaction
-		trytesJSON, _ := body["trytes"].([][]byte)
-		txs := make([]giota.Transaction, len(trytesJSON))
-		for i, t := range trytesJSON {
-			var tx = giota.Transaction{}
-			tx.UnmarshalJSON(t)
-			txs[i] = tx
-		}
-
+		// Get configuration.
 		provider := os.Getenv("PROVIDER")
 		minDepth, _ := strconv.ParseInt(os.Getenv("MIN_DEPTH"), 10, 64)
 		minWeightMag, _ := strconv.ParseInt(os.Getenv("MIN_WEIGHT_MAGNITUDE"), 10, 64)
 
+		// Async sendTrytes
 		api := giota.NewAPI(provider, nil)
 		_, pow := giota.GetBestPoW()
-
-		// fmt.Printf("\n%v\n", txs, minDepth, minWeightMag, provider)
 
 		go giota.SendTrytes(api, minDepth, txs, minWeightMag, pow)
 
@@ -67,7 +73,6 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 	}
-
 }
 
 func powHandler(w http.ResponseWriter, r *http.Request) {
