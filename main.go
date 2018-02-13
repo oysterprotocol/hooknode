@@ -61,7 +61,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 
 		// fmt.Printf("\n%v\n", txs, minDepth, minWeightMag, provider)
 
-		giota.SendTrytes(api, minDepth, txs, minWeightMag, pow)
+		go giota.SendTrytes(api, minDepth, txs, minWeightMag, pow)
 
 		w.WriteHeader(http.StatusNoContent)
 	} else {
