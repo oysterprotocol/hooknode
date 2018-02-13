@@ -2,14 +2,29 @@
 
 
 [[projects]]
+  branch = "master"
+  name = "github.com/iotaledger/giota"
+  packages = [
+    ".",
+    "cl"
+  ]
+  revision = "878232e0fc914d9e734311deb84877bc1e1dafcb"
+
+[[projects]]
   name = "github.com/joho/godotenv"
   packages = ["."]
   revision = "a79fa1e548e2c689c241d10173efd51e5d689d5b"
   version = "v1.2.0"
 
+[[projects]]
+  branch = "master"
+  name = "leb.io/hashland"
+  packages = ["keccakpg"]
+  revision = "07375b562deaa8d6891f9618a04e94a0b98e2ee7"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "262974c46471e98fee34ad131ea69f4ae89f37d407a394c3936e38ca68643196"
+  inputs-digest = "7cc7934d6761df53fe03ac30e26c79e8dfc12b75d10401bc76b9159ad01cd3c7"
   solver-name = "gps-cdcl"
   solver-version = 1

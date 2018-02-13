@@ -14,6 +14,9 @@
 # Environment Variables
 .env
 
+# Vendor
+vendor/
+
 # Output binary
 gin-bin
 bin/main
