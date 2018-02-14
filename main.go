@@ -39,7 +39,7 @@ func main() {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Print("Processing trytes")
+	fmt.Print("\nProcessing trytes\n")
 	if r.Method == "POST" {
 
 		// Unmarshal JSON
@@ -68,7 +68,11 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		api := giota.NewAPI(provider, nil)
 		_, pow := giota.GetBestPoW()
 
-		go giota.SendTrytes(api, minDepth, txs, minWeightMag, pow)
+		fmt.Print("Sending Transactions...\n")
+		go func() {
+			e := giota.SendTrytes(api, minDepth, txs, minWeightMag, pow)
+			fmt.Printf("giota.SendTrytes Error: %v\n", e)
+		}()
 
 		w.WriteHeader(http.StatusNoContent)
 	} else {
