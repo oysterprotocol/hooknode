@@ -39,6 +39,7 @@ func main() {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Print("Processing trytes")
 	if r.Method == "POST" {
 
 		// Unmarshal JSON
