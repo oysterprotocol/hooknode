@@ -20,22 +20,27 @@ type indexRequest struct {
 	Trytes []giota.Trytes `json:"trytes"`
 }
 
+func init() {
+	// Load ENV variables
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	// Setup sentry
+	raven.SetDSN(os.Getenv("SENTRY_DSN"))
+}
+
 func main() {
 	raven.CapturePanic(func() {
 
-		// Load ENV variables
-		err := godotenv.Load()
-		if err != nil {
-			log.Fatal("Error loading .env file")
-		}
-
 		// Attach handlers
-		http.HandleFunc("/", indexHandler)
+		http.HandleFunc("/", raven.RecoveryHandler(indexHandler))
 		http.HandleFunc("/pow", powHandler)
 
 		// Fetch port from ENV
 		port := os.Getenv("PORT")
-		fmt.Print("Listing on http://localhost:" + port)
+		fmt.Printf("\nListing on http://localhost:%v\n", port)
 
 		// Start listening
 		http.ListenAndServe(":"+port, nil)
