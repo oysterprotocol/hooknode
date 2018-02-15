@@ -77,7 +77,6 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		go func() {
 			e := giota.SendTrytes(api, minDepth, txs, minWeightMag, pow)
 			raven.CaptureError(e, nil)
-			fmt.Printf("giota.SendTrytes Error: %v\n", e)
 		}()
 
 		w.WriteHeader(http.StatusNoContent)
