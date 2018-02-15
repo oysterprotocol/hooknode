@@ -2,6 +2,18 @@
 
 
 [[projects]]
+  name = "github.com/certifi/gocertifi"
+  packages = ["."]
+  revision = "deb3ae2ef2610fde3330947281941c562861188b"
+  version = "2018.01.18"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/getsentry/raven-go"
+  packages = ["."]
+  revision = "563b81fc02b75d664e54da31f787c2cc2186780b"
+
+[[projects]]
   branch = "master"
   name = "github.com/iotaledger/giota"
   packages = [
@@ -17,6 +29,12 @@
   version = "v1.2.0"
 
 [[projects]]
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
+
+[[projects]]
   branch = "master"
   name = "leb.io/hashland"
   packages = ["keccakpg"]
@@ -25,6 +43,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7cc7934d6761df53fe03ac30e26c79e8dfc12b75d10401bc76b9159ad01cd3c7"
+  inputs-digest = "5e785fab6dfc0298e28c3170003e69c87ce40c1170473830af75838cb3fd7734"
   solver-name = "gps-cdcl"
   solver-version = 1

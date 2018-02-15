@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"strconv"
 
+	"github.com/getsentry/raven-go"
 	"github.com/iotaledger/giota"
 	"github.com/joho/godotenv"
 )
@@ -20,22 +21,26 @@ type indexRequest struct {
 }
 
 func main() {
-	// Load ENV variables
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	raven.CapturePanic(func() {
 
-	// Attach handlers
-	http.HandleFunc("/", indexHandler)
-	http.HandleFunc("/pow", powHandler)
+		// Load ENV variables
+		err := godotenv.Load()
+		if err != nil {
+			log.Fatal("Error loading .env file")
+		}
 
-	// Fetch port from ENV
-	port := os.Getenv("PORT")
-	fmt.Print("Listing on http://localhost:" + port)
+		// Attach handlers
+		http.HandleFunc("/", indexHandler)
+		http.HandleFunc("/pow", powHandler)
 
-	// Start listening
-	http.ListenAndServe(":"+port, nil)
+		// Fetch port from ENV
+		port := os.Getenv("PORT")
+		fmt.Print("Listing on http://localhost:" + port)
+
+		// Start listening
+		http.ListenAndServe(":"+port, nil)
+
+	}, nil)
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
@@ -71,6 +76,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Print("Sending Transactions...\n")
 		go func() {
 			e := giota.SendTrytes(api, minDepth, txs, minWeightMag, pow)
+			raven.CaptureError(e, nil)
 			fmt.Printf("giota.SendTrytes Error: %v\n", e)
 		}()
 
