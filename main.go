@@ -40,7 +40,7 @@ func main() {
 
 		// Fetch port from ENV
 		port := os.Getenv("PORT")
-		fmt.Printf("\nListing on http://localhost:%v\n", port)
+		fmt.Printf("\nListening on http://localhost:%v\n", port)
 
 		// Start listening
 		http.ListenAndServe(":"+port, nil)
