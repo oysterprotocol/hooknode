@@ -4,7 +4,9 @@ install-deps:
 	&& dep ensure
 
 start:
-	go build -o ./bin/main . && ./bin/main
+	dep ensure \
+	&& go build -o ./bin/main . \
+	&& ./bin/main
 
 start-dev:
 	gin -i run main.go
