@@ -14,6 +14,9 @@ import (
 	"github.com/getsentry/raven-go"
 	"github.com/iotaledger/giota"
 	"github.com/joho/godotenv"
+	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/load"
+	"github.com/shirou/gopsutil/mem"
 )
 
 type indexRequest struct {
@@ -36,6 +39,7 @@ func main() {
 
 		// Attach handlers
 		http.HandleFunc("/", raven.RecoveryHandler(indexHandler))
+		http.HandleFunc("/stats", raven.RecoveryHandler(statsHandler))
 		http.HandleFunc("/pow", powHandler)
 
 		// Fetch port from ENV
@@ -107,4 +111,23 @@ func powHandler(w http.ResponseWriter, r *http.Request) {
 
 func getFuncName(i interface{}) string {
 	return runtime.FuncForPC(reflect.ValueOf(i).Pointer()).Name()
+}
+
+func statsHandler(w http.ResponseWriter, r *http.Request) {
+	c, _ := cpu.Percent(0, false)
+	l, _ := load.Avg()
+	m, _ := mem.VirtualMemory()
+
+	body := map[string]interface{}{
+		"cpu": map[string]interface{}{
+			"avgPercent": c[0],
+		},
+		"load":   l,
+		"memory": m,
+	}
+
+	res, _ := json.Marshal(body)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(res)
 }

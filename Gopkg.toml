@@ -16,3 +16,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/getsentry/raven-go"
+
+[[constraint]]
+  name = "github.com/shirou/gopsutil"
+  version = "2.18.1"
