@@ -69,12 +69,6 @@
   ]
   revision = "37707fdb30a5b38865cfb95e5aab41707daec7fd"
 
-[[projects]]
-  branch = "master"
-  name = "leb.io/hashland"
-  packages = ["keccakpg"]
-  revision = "07375b562deaa8d6891f9618a04e94a0b98e2ee7"
-
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
