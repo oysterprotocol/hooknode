@@ -35,7 +35,7 @@
     ".",
     "cl"
   ]
-  revision = "878232e0fc914d9e734311deb84877bc1e1dafcb"
+  revision = "f0afbc97d7875247b0f7e27aa59008f36b2a3aaf"
 
 [[projects]]
   name = "github.com/joho/godotenv"
@@ -62,18 +62,18 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/tildeleb/hashland"
+  packages = ["keccakpg"]
+  revision = "07375b562deaa8d6891f9618a04e94a0b98e2ee7"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows"
   ]
-  revision = "37707fdb30a5b38865cfb95e5aab41707daec7fd"
-
-[[projects]]
-  branch = "master"
-  name = "leb.io/hashland"
-  packages = ["keccakpg"]
-  revision = "07375b562deaa8d6891f9618a04e94a0b98e2ee7"
+  revision = "88d2dcc510266da9f7f8c7f34e1940716cab5f5c"
 
 [solve-meta]
   analyzer-name = "dep"
