@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -20,7 +21,15 @@ import (
 )
 
 type indexRequest struct {
-	Trytes []giota.Trytes `json:"trytes"`
+	Trytes            []giota.Trytes `json:"trytes"`
+	TrunkTransaction  giota.Trytes   `json:"trunkTransaction"`
+	BranchTransaction giota.Trytes   `json:"branchTransaction"`
+	Command           string         `json:"command"`
+	BroadcastNodes    []string       `json:"broadcastingNodes"`
+}
+
+type broadcastRequest struct {
+	Trytes []giota.Transaction `json:"trytes"`
 }
 
 func init() {
@@ -39,6 +48,7 @@ func main() {
 
 		// Attach handlers
 		http.HandleFunc("/", raven.RecoveryHandler(indexHandler))
+		http.HandleFunc("/broadcast", raven.RecoveryHandler(broadcastHandler))
 		http.HandleFunc("/stats", raven.RecoveryHandler(statsHandler))
 		http.HandleFunc("/pow", powHandler)
 
@@ -59,38 +69,114 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		// Unmarshal JSON
 		b, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			http.Error(w, "Invalid request method", http.StatusBadRequest)
+			raven.CaptureError(err, nil)
+			http.Error(w, "Invalid request", http.StatusBadRequest)
 			return
 		}
 		defer r.Body.Close()
 		req := indexRequest{}
 		json.Unmarshal(b, &req)
 
-		// Convert []Trytes to []Transaction
-		txs := make([]giota.Transaction, len(req.Trytes))
-		for i, t := range req.Trytes {
-			tx, _ := giota.NewTransaction(t)
-			txs[i] = *tx
-		}
-
-		// Get configuration.
-		provider := os.Getenv("PROVIDER")
-		minDepth, _ := strconv.ParseInt(os.Getenv("MIN_DEPTH"), 10, 64)
-		minWeightMag, _ := strconv.ParseInt(os.Getenv("MIN_WEIGHT_MAGNITUDE"), 10, 64)
-
-		// Async sendTrytes
-		api := giota.NewAPI(provider, nil)
-		_, pow := giota.GetBestPoW()
-
-		fmt.Print("Sending Transactions...\n")
-		go func() {
-			e := giota.SendTrytes(api, minDepth, txs, minWeightMag, pow)
-			raven.CaptureError(e, nil)
-		}()
+		go attachAndBroadcastToTangle(&req)
 
 		w.WriteHeader(http.StatusNoContent)
 	} else {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+	}
+}
+
+func attachAndBroadcastToTangle(indexReq *indexRequest) {
+	provider := os.Getenv("PROVIDER")
+	// minDepth, _ := strconv.ParseInt(os.Getenv("MIN_DEPTH"), 10, 64)
+	minWeightMag, _ := strconv.ParseInt(os.Getenv("MIN_WEIGHT_MAGNITUDE"), 10, 64)
+
+	// Convert []Trytes to []Transaction
+	txs := make([]giota.Transaction, len(indexReq.Trytes))
+	for i, t := range indexReq.Trytes {
+		tx, _ := giota.NewTransaction(t)
+		txs[i] = *tx
+	}
+
+	api := giota.NewAPI(provider, nil)
+	// _, pow := giota.GetBestPoW()
+
+	attachReq := giota.AttachToTangleRequest{
+		Command:            "attachToTangle",
+		TrunkTransaction:   indexReq.TrunkTransaction,
+		BranchTransaction:  indexReq.BranchTransaction,
+		MinWeightMagnitude: minWeightMag,
+		Trytes:             txs,
+	}
+
+	attachRes, err := api.AttachToTangle(&attachReq)
+	if err != nil {
+		raven.CaptureError(err, nil)
+		return
+	}
+
+	// Broadcast trytes.
+
+	// Broadcast on self
+	go broadcastAndStore(&attachRes.Trytes)
+
+	// Broadcast to other hooknodes
+	broadcastReq := broadcastRequest{
+		Trytes: attachRes.Trytes,
+	}
+	jsonReq, err := json.Marshal(broadcastReq)
+	if err != nil {
+		raven.CaptureError(err, nil)
+		return
+	}
+	reqBody := bytes.NewBuffer(jsonReq)
+
+	for _, node := range indexReq.BroadcastNodes {
+		nodeURL := "http://" + node + ":3000/broadcast"
+		// Async broadcasting
+		go func() {
+			_, err := http.Post(nodeURL, "application/json", reqBody)
+			if err != nil {
+				raven.CaptureError(err, nil)
+			}
+		}()
+
+	}
+
+}
+
+func broadcastHandler(w http.ResponseWriter, r *http.Request) {
+	// Unmarshal JSON
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		raven.CaptureError(err, nil)
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+	req := broadcastRequest{}
+	json.Unmarshal(b, &req)
+
+	go broadcastAndStore(&req.Trytes)
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func broadcastAndStore(txs *[]giota.Transaction) {
+	provider := os.Getenv("PROVIDER")
+	api := giota.NewAPI(provider, nil)
+
+	// Broadcast
+	err := api.BroadcastTransactions(*txs)
+	if err != nil {
+		raven.CaptureError(err, nil)
+		return
+	}
+
+	// Store
+	err = api.StoreTransactions(*txs)
+	if err != nil {
+		raven.CaptureError(err, nil)
+		return
 	}
 }
 
