@@ -8,8 +8,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"reflect"
-	"runtime"
 	"strconv"
 
 	"github.com/getsentry/raven-go"
@@ -193,11 +191,9 @@ func broadcastAndStore(txs *[]giota.Transaction) {
 }
 
 func powHandler(w http.ResponseWriter, r *http.Request) {
-	_, pow := giota.GetBestPoW()
+	pow, _ := giota.GetBestPoW()
 
-	// TODO: Figure out how to print the func name.
-	body, err :=
-		json.Marshal(map[string]interface{}{"powAlgo": getFuncName(pow)})
+	body, err := json.Marshal(map[string]string{"powAlgo": pow})
 
 	if err != nil {
 		http.Error(w, err.Error(), 500)
@@ -205,10 +201,6 @@ func powHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(body)
-}
-
-func getFuncName(i interface{}) string {
-	return runtime.FuncForPC(reflect.ValueOf(i).Pointer()).Name()
 }
 
 func statsHandler(w http.ResponseWriter, r *http.Request) {
