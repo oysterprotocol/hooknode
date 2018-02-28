@@ -48,11 +48,11 @@ func main() {
 	raven.CapturePanic(func() {
 
 		// Attach handlers
-		http.HandleFunc("/broadcast", raven.RecoveryHandler(broadcastHandler))
-		http.HandleFunc("/stats", raven.RecoveryHandler(statsHandler))
-		http.HandleFunc("/pow", powHandler)
-		http.HandleFunc("/sentry", raven.RecoveryHandler(sentryHandler))
-		http.HandleFunc("/version", raven.RecoveryHandler(versionHandler))
+		http.HandleFunc("/broadcast/", raven.RecoveryHandler(broadcastHandler))
+		http.HandleFunc("/stats/", raven.RecoveryHandler(statsHandler))
+		http.HandleFunc("/pow/", powHandler)
+		http.HandleFunc("/sentry/", raven.RecoveryHandler(sentryHandler))
+		http.HandleFunc("/version/", raven.RecoveryHandler(versionHandler))
 		http.HandleFunc("/", raven.RecoveryHandler(indexHandler))
 
 		// Fetch port from ENV
