@@ -81,6 +81,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 
 		go attachAndBroadcastToTangle(&req)
 
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNoContent)
 	} else {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
@@ -176,6 +177,7 @@ func broadcastHandler(w http.ResponseWriter, r *http.Request) {
 
 	go broadcastAndStore(&req.Trytes)
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -241,5 +243,6 @@ func sentryHandler(w http.ResponseWriter, r *http.Request) {
 	err := errors.New("TESTING SENTRY")
 	go raven.CaptureError(err, nil)
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusNoContent)
 }
