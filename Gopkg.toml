@@ -20,3 +20,7 @@
 [[constraint]]
   name = "github.com/shirou/gopsutil"
   version = "2.18.1"
+
+[[constraint]]
+  name = "gopkg.in/segmentio/analytics-go.v3"
+  version = "3.0.0"

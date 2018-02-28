@@ -50,6 +50,12 @@
   version = "v0.8.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/segmentio/backo-go"
+  packages = ["."]
+  revision = "204274ad699c0983a70203a566887f17a717fef4"
+
+[[projects]]
   name = "github.com/shirou/gopsutil"
   packages = [
     "cpu",
@@ -68,6 +74,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/xtgo/uuid"
+  packages = ["."]
+  revision = "a0b114877d4caeffbd7f87e3757c17fce570fea7"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/sys"
   packages = [
     "unix",
@@ -75,9 +87,15 @@
   ]
   revision = "88d2dcc510266da9f7f8c7f34e1940716cab5f5c"
 
+[[projects]]
+  name = "gopkg.in/segmentio/analytics-go.v3"
+  packages = ["."]
+  revision = "1178b964a36694a8f9c161b19e6fe28cb37e8482"
+  version = "3.0.0"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f127418c9d04bfd7dcd2679912dac8782670c55674fdabd0edc59cad614ac9c7"
+  inputs-digest = "9616e4842fdd16b2d8136cb7105207fef1cef55442e4daf308f6c7ab51e3c381"
   solver-name = "gps-cdcl"
   solver-version = 1

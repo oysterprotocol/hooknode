@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"reflect"
@@ -19,6 +20,7 @@ import (
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/load"
 	"github.com/shirou/gopsutil/mem"
+	"gopkg.in/segmentio/analytics-go.v3"
 )
 
 type indexRequest struct {
@@ -33,6 +35,8 @@ type broadcastRequest struct {
 	Trytes []giota.Transaction `json:"trytes"`
 }
 
+var segmentClient analytics.Client
+
 func init() {
 	// Load ENV variables
 	err := godotenv.Load()
@@ -42,6 +46,9 @@ func init() {
 
 	// Setup sentry
 	raven.SetDSN(os.Getenv("SENTRY_DSN"))
+
+	// Setup Segment
+	segmentClient = analytics.New(os.Getenv("SEGMENT_WRITE_KEY"))
 }
 
 func main() {
@@ -67,8 +74,8 @@ func main() {
 
 func attachHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Print("\nattachHandler\n")
-
 	fmt.Print("\nProcessing trytes\n")
+
 	if r.Method == "POST" {
 
 		// Unmarshal JSON
@@ -92,33 +99,7 @@ func attachHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func attachAndBroadcastToTangle(indexReq *indexRequest) {
-	// provider := os.Getenv("PROVIDER")
-	// minDepth, _ := strconv.ParseInt(os.Getenv("MIN_DEPTH"), 10, 64)
-	// api := giota.NewAPI(provider, nil)
 	minWeightMag, _ := strconv.ParseInt(os.Getenv("MIN_WEIGHT_MAGNITUDE"), 10, 0)
-
-	// Convert []Trytes to []Transaction
-	// txs := make([]giota.Transaction, len(indexReq.Trytes))
-	// for i, t := range indexReq.Trytes {
-	// 	tx, _ := giota.NewTransaction(t)
-	// 	txs[i] = *tx
-	// }
-
-	// _, pow := giota.GetBestPoW()
-
-	// attachReq := giota.AttachToTangleRequest{
-	// 	Command:            "attachToTangle",
-	// 	TrunkTransaction:   indexReq.TrunkTransaction,
-	// 	BranchTransaction:  indexReq.BranchTransaction,
-	// 	MinWeightMagnitude: minWeightMag,
-	// 	Trytes:             txs,
-	// }
-
-	// attachRes, err := api.AttachToTangle(&attachReq)
-	// if err != nil {
-	// 	raven.CaptureError(err, nil)
-	// 	return
-	// }
 
 	// Convert []Trytes to []Transaction
 	txs := make([]giota.Transaction, len(indexReq.Trytes))
@@ -150,6 +131,17 @@ func attachAndBroadcastToTangle(indexReq *indexRequest) {
 
 	for _, node := range indexReq.BroadcastNodes {
 		nodeURL := "http://" + node + ":3000/broadcast"
+
+		// Async log
+		go func() {
+			segmentClient.Enqueue(analytics.Track{
+				Event:  "broadcast_to_other_hooknodes",
+				UserId: getLocalIP(),
+				Properties: analytics.NewProperties().
+					Set("addresses", mapTxsToAddrs(txs)),
+			})
+		}()
+
 		// Async broadcasting
 		go func() {
 			_, err := http.Post(nodeURL, "application/json", reqBody)
@@ -190,12 +182,32 @@ func broadcastAndStore(txs *[]giota.Transaction) {
 	provider := os.Getenv("PROVIDER")
 	api := giota.NewAPI(provider, nil)
 
+	// Async log
+	go func() {
+		segmentClient.Enqueue(analytics.Track{
+			Event:  "broadcast_transactions",
+			UserId: getLocalIP(),
+			Properties: analytics.NewProperties().
+				Set("addresses", mapTxsToAddrs(*txs)),
+		})
+	}()
+
 	// Broadcast
 	err := api.BroadcastTransactions(*txs)
 	if err != nil {
 		raven.CaptureError(err, nil)
 		return
 	}
+
+	// Async log
+	go func() {
+		segmentClient.Enqueue(analytics.Track{
+			Event:  "store_transactions",
+			UserId: getLocalIP(),
+			Properties: analytics.NewProperties().
+				Set("addresses", mapTxsToAddrs(*txs)),
+		})
+	}()
 
 	// Store
 	err = api.StoreTransactions(*txs)
@@ -273,5 +285,29 @@ func versionHandler(w http.ResponseWriter, r *http.Request) {
 
 func successJSON() (res []byte) {
 	res, _ = json.Marshal(map[string]bool{"success": true})
+	return
+}
+
+func getLocalIP() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return ""
+	}
+	for _, address := range addrs {
+		// check the address type and if it is not a loopback the display it
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				return ipnet.IP.String()
+			}
+		}
+	}
+	return ""
+}
+
+func mapTxsToAddrs(txs []giota.Transaction) (addrs []giota.Address) {
+	for i, tx := range txs {
+		addrs[i] = tx.Address
+	}
+
 	return
 }
