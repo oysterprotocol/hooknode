@@ -66,6 +66,8 @@ func main() {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Print("\nindexHandler\n")
+
 	fmt.Print("\nProcessing trytes\n")
 	if r.Method == "POST" {
 
@@ -161,6 +163,8 @@ func attachAndBroadcastToTangle(indexReq *indexRequest) {
 }
 
 func broadcastHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Print("\nbrodcastHandler\n")
+
 	// HACK: Using sentry for logs.
 	err := errors.New("/broadcast")
 	go raven.CaptureError(err, nil)
@@ -202,6 +206,8 @@ func broadcastAndStore(txs *[]giota.Transaction) {
 }
 
 func powHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Print("\npowHandler\n")
+
 	_, pow := giota.GetBestPoW()
 
 	// TODO: Figure out how to print the func name.
@@ -221,6 +227,8 @@ func getFuncName(i interface{}) string {
 }
 
 func statsHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Print("\nstatsHandler\n")
+
 	c, _ := cpu.Percent(0, false)
 	l, _ := load.Avg()
 	m, _ := mem.VirtualMemory()
@@ -240,6 +248,8 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func sentryHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Print("\nsentryHandler\n")
+
 	// TESTING Error
 	err := errors.New("TESTING SENTRY")
 	go raven.CaptureError(err, nil)
@@ -249,6 +259,8 @@ func sentryHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func versionHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Print("\nversionHandler\n")
+
 	gitCommit := os.Getenv("GIT_COMMIT")
 	if gitCommit == "" {
 		gitCommit = "Error: GIT_COMMIT not set"
