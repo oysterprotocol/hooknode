@@ -3,11 +3,13 @@ install-deps:
 	&& go get github.com/codegangsta/gin \
 	&& dep ensure
 
-start:
-	export GIT_COMMIT=$(git rev-list -1 HEAD) && \
+build:
+	export GIT_COMMIT=$(git rev-list -1 HEAD) \
 	&& dep ensure \
-	&& go build -o ./bin/main . \
-	&& ./bin/main
+	&& go build -o ./bin/main .
+
+start: build
+	./bin/main
 
 start-dev:
 	gin -i run main.go
