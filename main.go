@@ -19,6 +19,7 @@ import (
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/load"
 	"github.com/shirou/gopsutil/mem"
+	"gopkg.in/segmentio/analytics-go.v3"
 )
 
 type indexRequest struct {
@@ -33,6 +34,8 @@ type broadcastRequest struct {
 	Trytes []giota.Transaction `json:"trytes"`
 }
 
+var segmentClient analytics.Client
+
 func init() {
 	// Load ENV variables
 	err := godotenv.Load()
@@ -42,6 +45,9 @@ func init() {
 
 	// Setup sentry
 	raven.SetDSN(os.Getenv("SENTRY_DSN"))
+
+	// Setup Segment
+	segmentClient = analytics.New("YOUR_WRITE_KEY")
 }
 
 func main() {
@@ -67,8 +73,8 @@ func main() {
 
 func attachHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Print("\nattachHandler\n")
-
 	fmt.Print("\nProcessing trytes\n")
+
 	if r.Method == "POST" {
 
 		// Unmarshal JSON
