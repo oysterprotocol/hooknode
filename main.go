@@ -98,33 +98,7 @@ func attachHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func attachAndBroadcastToTangle(indexReq *indexRequest) {
-	// provider := os.Getenv("PROVIDER")
-	// minDepth, _ := strconv.ParseInt(os.Getenv("MIN_DEPTH"), 10, 64)
-	// api := giota.NewAPI(provider, nil)
 	minWeightMag, _ := strconv.ParseInt(os.Getenv("MIN_WEIGHT_MAGNITUDE"), 10, 0)
-
-	// Convert []Trytes to []Transaction
-	// txs := make([]giota.Transaction, len(indexReq.Trytes))
-	// for i, t := range indexReq.Trytes {
-	// 	tx, _ := giota.NewTransaction(t)
-	// 	txs[i] = *tx
-	// }
-
-	// _, pow := giota.GetBestPoW()
-
-	// attachReq := giota.AttachToTangleRequest{
-	// 	Command:            "attachToTangle",
-	// 	TrunkTransaction:   indexReq.TrunkTransaction,
-	// 	BranchTransaction:  indexReq.BranchTransaction,
-	// 	MinWeightMagnitude: minWeightMag,
-	// 	Trytes:             txs,
-	// }
-
-	// attachRes, err := api.AttachToTangle(&attachReq)
-	// if err != nil {
-	// 	raven.CaptureError(err, nil)
-	// 	return
-	// }
 
 	// Convert []Trytes to []Transaction
 	txs := make([]giota.Transaction, len(indexReq.Trytes))
