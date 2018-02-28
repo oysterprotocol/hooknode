@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -51,6 +52,7 @@ func main() {
 		http.HandleFunc("/broadcast", raven.RecoveryHandler(broadcastHandler))
 		http.HandleFunc("/stats", raven.RecoveryHandler(statsHandler))
 		http.HandleFunc("/pow", powHandler)
+		http.HandleFunc("/sentry", raven.RecoveryHandler(sentryHandler))
 
 		// Fetch port from ENV
 		port := os.Getenv("PORT")
@@ -228,4 +230,12 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(res)
+}
+
+func sentryHandler(w http.ResponseWriter, r *http.Request) {
+	// TESTING Error
+	err := errors.New("TESTING SENTRY")
+	go raven.CaptureError(err, nil)
+
+	w.WriteHeader(http.StatusNoContent)
 }
