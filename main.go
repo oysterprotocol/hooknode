@@ -48,12 +48,12 @@ func main() {
 	raven.CapturePanic(func() {
 
 		// Attach handlers
+		http.HandleFunc("/attach/", raven.RecoveryHandler(attachHandler))
 		http.HandleFunc("/broadcast/", raven.RecoveryHandler(broadcastHandler))
 		http.HandleFunc("/stats/", raven.RecoveryHandler(statsHandler))
 		http.HandleFunc("/pow/", powHandler)
 		http.HandleFunc("/sentry/", raven.RecoveryHandler(sentryHandler))
 		http.HandleFunc("/version/", raven.RecoveryHandler(versionHandler))
-		http.HandleFunc("/", raven.RecoveryHandler(indexHandler))
 
 		// Fetch port from ENV
 		port := os.Getenv("PORT")
@@ -65,8 +65,8 @@ func main() {
 	}, nil)
 }
 
-func indexHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Print("\nindexHandler\n")
+func attachHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Print("\nattachHandler\n")
 
 	fmt.Print("\nProcessing trytes\n")
 	if r.Method == "POST" {
