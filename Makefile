@@ -4,7 +4,8 @@ install-deps:
 	&& dep ensure
 
 start:
-	dep ensure \
+	export GIT_COMMIT=$(git rev-list -1 HEAD) && \
+	&& dep ensure \
 	&& go build -o ./bin/main . \
 	&& ./bin/main
 
