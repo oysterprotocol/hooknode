@@ -47,7 +47,7 @@ func init() {
 	raven.SetDSN(os.Getenv("SENTRY_DSN"))
 
 	// Setup Segment
-	segmentClient = analytics.New("YOUR_WRITE_KEY")
+	segmentClient = analytics.New(os.Getenv("SEGMENT_WRITE_KEY"))
 }
 
 func main() {
