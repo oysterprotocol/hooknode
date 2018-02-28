@@ -53,6 +53,7 @@ func main() {
 		http.HandleFunc("/stats", raven.RecoveryHandler(statsHandler))
 		http.HandleFunc("/pow", powHandler)
 		http.HandleFunc("/sentry", raven.RecoveryHandler(sentryHandler))
+		http.HandleFunc("/version", raven.RecoveryHandler(versionHandler))
 
 		// Fetch port from ENV
 		port := os.Getenv("PORT")
@@ -81,7 +82,8 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 
 		go attachAndBroadcastToTangle(&req)
 
-		w.WriteHeader(http.StatusNoContent)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(successJSON())
 	} else {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 	}
@@ -176,7 +178,8 @@ func broadcastHandler(w http.ResponseWriter, r *http.Request) {
 
 	go broadcastAndStore(&req.Trytes)
 
-	w.WriteHeader(http.StatusNoContent)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(successJSON())
 }
 
 func broadcastAndStore(txs *[]giota.Transaction) {
@@ -241,5 +244,22 @@ func sentryHandler(w http.ResponseWriter, r *http.Request) {
 	err := errors.New("TESTING SENTRY")
 	go raven.CaptureError(err, nil)
 
-	w.WriteHeader(http.StatusNoContent)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(successJSON())
+}
+
+func versionHandler(w http.ResponseWriter, r *http.Request) {
+	gitCommit := os.Getenv("GIT_COMMIT")
+	if gitCommit == "" {
+		gitCommit = "Error: GIT_COMMIT not set"
+	}
+
+	res, _ := json.Marshal(map[string]string{"lastGitCommit": gitCommit})
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(res)
+}
+
+func successJSON() (res []byte) {
+	res, _ = json.Marshal(map[string]bool{"success": true})
+	return
 }
