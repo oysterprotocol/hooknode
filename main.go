@@ -82,7 +82,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		go attachAndBroadcastToTangle(&req)
 
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusNoContent)
+		w.Write(successJSON())
 	} else {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 	}
@@ -178,7 +178,7 @@ func broadcastHandler(w http.ResponseWriter, r *http.Request) {
 	go broadcastAndStore(&req.Trytes)
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusNoContent)
+	w.Write(successJSON())
 }
 
 func broadcastAndStore(txs *[]giota.Transaction) {
@@ -244,5 +244,10 @@ func sentryHandler(w http.ResponseWriter, r *http.Request) {
 	go raven.CaptureError(err, nil)
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusNoContent)
+	w.Write(successJSON())
+}
+
+func successJSON() (res []byte) {
+	res, _ = json.Marshal(map[string]bool{"success": true})
+	return
 }
