@@ -159,6 +159,10 @@ func attachAndBroadcastToTangle(indexReq *indexRequest) {
 }
 
 func broadcastHandler(w http.ResponseWriter, r *http.Request) {
+	// HACK: Using sentry for logs.
+	err := errors.New("/broadcast")
+	go raven.CaptureError(err, nil)
+
 	// Unmarshal JSON
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
