@@ -52,7 +52,7 @@ func main() {
 		http.HandleFunc("/broadcast", raven.RecoveryHandler(broadcastHandler))
 		http.HandleFunc("/stats", raven.RecoveryHandler(statsHandler))
 		http.HandleFunc("/pow", powHandler)
-		http.HandleFunc("/sentry", raven.RecoveryHandler(sentrysHandler))
+		http.HandleFunc("/sentry", raven.RecoveryHandler(sentryHandler))
 
 		// Fetch port from ENV
 		port := os.Getenv("PORT")
