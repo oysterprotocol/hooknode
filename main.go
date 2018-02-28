@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"reflect"
@@ -130,6 +131,17 @@ func attachAndBroadcastToTangle(indexReq *indexRequest) {
 
 	for _, node := range indexReq.BroadcastNodes {
 		nodeURL := "http://" + node + ":3000/broadcast"
+
+		// Async log
+		go func() {
+			segmentClient.Enqueue(analytics.Track{
+				Event:  "broadcast_to_other_hooknodes",
+				UserId: getLocalIP(),
+				Properties: analytics.NewProperties().
+					Set("addresses", mapTxsToAddrs(txs)),
+			})
+		}()
+
 		// Async broadcasting
 		go func() {
 			_, err := http.Post(nodeURL, "application/json", reqBody)
@@ -170,12 +182,32 @@ func broadcastAndStore(txs *[]giota.Transaction) {
 	provider := os.Getenv("PROVIDER")
 	api := giota.NewAPI(provider, nil)
 
+	// Async log
+	go func() {
+		segmentClient.Enqueue(analytics.Track{
+			Event:  "broadcast_transactions",
+			UserId: getLocalIP(),
+			Properties: analytics.NewProperties().
+				Set("addresses", mapTxsToAddrs(*txs)),
+		})
+	}()
+
 	// Broadcast
 	err := api.BroadcastTransactions(*txs)
 	if err != nil {
 		raven.CaptureError(err, nil)
 		return
 	}
+
+	// Async log
+	go func() {
+		segmentClient.Enqueue(analytics.Track{
+			Event:  "store_transactions",
+			UserId: getLocalIP(),
+			Properties: analytics.NewProperties().
+				Set("addresses", mapTxsToAddrs(*txs)),
+		})
+	}()
 
 	// Store
 	err = api.StoreTransactions(*txs)
@@ -253,5 +285,29 @@ func versionHandler(w http.ResponseWriter, r *http.Request) {
 
 func successJSON() (res []byte) {
 	res, _ = json.Marshal(map[string]bool{"success": true})
+	return
+}
+
+func getLocalIP() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return ""
+	}
+	for _, address := range addrs {
+		// check the address type and if it is not a loopback the display it
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				return ipnet.IP.String()
+			}
+		}
+	}
+	return ""
+}
+
+func mapTxsToAddrs(txs []giota.Transaction) (addrs []giota.Address) {
+	for i, tx := range txs {
+		addrs[i] = tx.Address
+	}
+
 	return
 }
