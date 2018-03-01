@@ -57,6 +57,9 @@ func main() {
 	// create channel
 	jobQueue := make(chan giota.Transaction)
 
+	// start the worker
+	go powWorker(jobQueue)
+
 	raven.CapturePanic(func() {
 
 		// Attach handlers
@@ -78,9 +81,6 @@ func main() {
 		http.ListenAndServe(":"+port, nil)
 
 	}, nil)
-
-	// start the worker
-	go powWorker(jobQueue)
 }
 
 func attachHandler2(w http.ResponseWriter, r *http.Request, jobQueue chan giota.Transaction) {
@@ -97,19 +97,19 @@ func attachHandler2(w http.ResponseWriter, r *http.Request, jobQueue chan giota.
 		}
 		defer r.Body.Close()
 		req := indexRequest{}
+
 		json.Unmarshal(b, &req)
 
 		// Convert []Trytes to []Transaction
 		txs := make([]giota.Transaction, len(req.Trytes))
 
-		//
-		fmt.Println(len(req.Trytes))
-		//
+		jobQueue <- txs[0]
 
 		for i, t := range req.Trytes {
 			tx, _ := giota.NewTransaction(t)
 			txs[i] = *tx
-			jobQueue <- txs[i]
+			fmt.Println("Adding to job queue")
+			//jobQueue<-txs[i]
 			// this usage assumes giota.NewTransaction is building all transactions in the array
 			// correctly.  If not, adding items to the queue may need to be done in a different part
 			// of this method
@@ -119,18 +119,18 @@ func attachHandler2(w http.ResponseWriter, r *http.Request, jobQueue chan giota.
 		// to the powWorker method to process each tx one at a time
 
 		// Get configuration.
-		provider := os.Getenv("PROVIDER")
-		minDepth, _ := strconv.ParseInt(os.Getenv("MIN_DEPTH"), 10, 64)
-		minWeightMag, _ := strconv.ParseInt(os.Getenv("MIN_WEIGHT_MAGNITUDE"), 10, 64)
-
-		// Async sendTrytes
-		api := giota.NewAPI(provider, nil)
-		_, pow := giota.GetBestPoW()
+		//provider := os.Getenv("PROVIDER")
+		//minDepth, _ := strconv.ParseInt(os.Getenv("MIN_DEPTH"), 10, 64)
+		//minWeightMag, _ := strconv.ParseInt(os.Getenv("MIN_WEIGHT_MAGNITUDE"), 10, 64)
+		//
+		//// Async sendTrytes
+		//api := giota.NewAPI(provider, nil)
+		//_, pow := giota.GetBestPoW()
 
 		fmt.Print("Sending Transactions...\n")
 		go func() {
-			e := CustomSendTrytes(api, minDepth, txs, minWeightMag, pow)
-			raven.CaptureError(e, nil)
+			 //e := giota.SendTrytes(api, minDepth, txs, minWeightMag, pow)
+			 //raven.CaptureError(e, nil)
 		}()
 
 		w.WriteHeader(http.StatusNoContent)
@@ -140,7 +140,7 @@ func attachHandler2(w http.ResponseWriter, r *http.Request, jobQueue chan giota.
 }
 
 // SendTrytes does attachToTangle and finally, it broadcasts the transactions.
-func CustomSendTrytes(api *API, depth int64, trytes []Transaction, mwm int64, pow PowFunc) error {
+/*func CustomSendTrytes(api *API, depth int64, trytes []Transaction, mwm int64, pow PowFunc) error {
 	tra, err := api.GetTransactionsToApprove(depth, DefaultNumberOfWalks, "")
 	if err != nil {
 		return err
@@ -171,13 +171,17 @@ func CustomSendTrytes(api *API, depth int64, trytes []Transaction, mwm int64, po
 
 	// Broadcast and store tx
 	return api.BroadcastTransactions(trytes)
-}
+}*/
 
-func powWorker(jobChan <-chan giota.Transaction) {
-	for tx := range jobChan {
+func powWorker(jobQueue <-chan giota.Transaction) {
+	fmt.Println("IN POW WORKER METHOD")
+	for tx := range jobQueue {
 		// this is where we would call methods to deal with each tryte string
 		fmt.Println("Currently processing this tryte string:")
+		fmt.Println()
 		fmt.Println(tx)
+		fmt.Println()
+		fmt.Println()
 	}
 }
 
