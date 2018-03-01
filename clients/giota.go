@@ -35,15 +35,12 @@ func SendTrytes(trytes []giota.Trytes, trunk giota.Trytes, branch giota.Trytes) 
 	return api.BroadcastTransactions(txs)
 }
 
-/*
-	These are copied from the giota lib since they are not public.
-*/
-// This is copied from giota lib since it is not public.
+// Things below are copied from the giota lib since they are not public.
+// https://github.com/iotaledger/giota/blob/master/transfer.go#L322
 
 // (3^27-1)/2
 const maxTimestampTrytes = "MMMMMMMMM"
 
-// https://github.com/iotaledger/giota/blob/master/transfer.go#L322
 func doPow(tra *giota.GetTransactionsToApproveResponse, depth int64,
 	trytes []giota.Transaction, mwm int64, pow giota.PowFunc) error {
 
