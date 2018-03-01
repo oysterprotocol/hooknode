@@ -2,6 +2,7 @@ package giotaClient
 
 import (
 	"os"
+	"sync"
 	"time"
 
 	"github.com/iotaledger/giota"
@@ -57,6 +58,9 @@ func SendTrytes(trytes []giota.Trytes, trunk giota.Trytes, branch giota.Trytes) 
 // (3^27-1)/2
 const maxTimestampTrytes = "MMMMMMMMM"
 
+// This mutex was added by us.
+var mutex sync.Mutex
+
 func doPow(tra *giota.GetTransactionsToApproveResponse, depth int64,
 	trytes []giota.Transaction, mwm int64, pow giota.PowFunc) error {
 
@@ -77,7 +81,11 @@ func doPow(tra *giota.GetTransactionsToApproveResponse, depth int64,
 		trytes[i].AttachmentTimestampLowerBound = ""
 		trytes[i].AttachmentTimestampUpperBound = maxTimestampTrytes
 
+		// We customized this to lock here.
+		mutex.Lock()
 		trytes[i].Nonce, err = pow(trytes[i].Trytes(), int(mwm))
+		mutex.Unlock()
+
 		if err != nil {
 			return err
 		}
