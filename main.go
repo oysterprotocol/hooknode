@@ -114,7 +114,7 @@ func attachHandler2(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Print("Sending Transactions...\n")
 		go func() {
-			e := giota.SendTrytes(api, minDepth, txs, minWeightMag, pow)
+			e := CustomSendTrytes(api, minDepth, txs, minWeightMag, pow)
 			raven.CaptureError(e, nil)
 		}()
 
@@ -122,6 +122,40 @@ func attachHandler2(w http.ResponseWriter, r *http.Request) {
 	} else {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 	}
+}
+
+// SendTrytes does attachToTangle and finally, it broadcasts the transactions.
+func CustomSendTrytes(api *API, depth int64, trytes []Transaction, mwm int64, pow PowFunc) error {
+	tra, err := api.GetTransactionsToApprove(depth, DefaultNumberOfWalks, "")
+	if err != nil {
+		return err
+	}
+
+	switch {
+	case pow == nil:
+		at := AttachToTangleRequest{
+			TrunkTransaction:   tra.TrunkTransaction,
+			BranchTransaction:  tra.BranchTransaction,
+			MinWeightMagnitude: mwm,
+			Trytes:             trytes,
+		}
+
+		// attach to tangle - do pow
+		attached, err := api.AttachToTangle(&at)
+		if err != nil {
+			return err
+		}
+
+		trytes = attached.Trytes
+	default:
+		err := doPow(tra, depth, trytes, mwm, pow)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Broadcast and store tx
+	return api.BroadcastTransactions(trytes)
 }
 
 func attachHandler(w http.ResponseWriter, r *http.Request) {
