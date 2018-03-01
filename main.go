@@ -24,7 +24,8 @@ import (
 )
 
 type indexRequest struct {
-	Trytes            []giota.Trytes `json:"trytes"`
+	//Trytes            []giota.Trytes `json:"trytes"`
+	Trytes            []string `json:"trytes"`
 	TrunkTransaction  giota.Trytes   `json:"trunkTransaction"`
 	BranchTransaction giota.Trytes   `json:"branchTransaction"`
 	Command           string         `json:"command"`
@@ -55,7 +56,8 @@ func main() {
 	raven.CapturePanic(func() {
 
 		// Attach handlers
-		http.HandleFunc("/attach/", raven.RecoveryHandler(attachHandler))
+		//http.HandleFunc("/attach/", raven.RecoveryHandler(attachHandler))
+		http.HandleFunc("/attach/", raven.RecoveryHandler(attachHandler2))
 		http.HandleFunc("/broadcast/", raven.RecoveryHandler(broadcastHandler))
 		http.HandleFunc("/stats/", raven.RecoveryHandler(statsHandler))
 		http.HandleFunc("/pow/", powHandler)
@@ -70,6 +72,66 @@ func main() {
 		http.ListenAndServe(":"+port, nil)
 
 	}, nil)
+}
+
+func attachHandler2(w http.ResponseWriter, r *http.Request) {
+	fmt.Print("\nattachHandler2\n")
+	fmt.Print("\nProcessing trytes\n")
+	if r.Method == "POST" {
+
+		// Unmarshal JSON
+		b, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, "Invalid request method", http.StatusBadRequest)
+			return
+		}
+		defer r.Body.Close()
+		req := indexRequest{}
+		json.Unmarshal(b, &req)
+
+		for _, address := range addrs {
+			// check the address type and if it is not a loopback the display it
+			if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+				if ipnet.IP.To4() != nil {
+					return ipnet.IP.String()
+				}
+			}
+		}
+
+		// Convert []Trytes to []Transaction
+		txs := make([]giota.Transaction, len(req.Trytes))
+		//
+		////
+		//fmt.Println(len(req.Trytes))
+		////
+		//
+		//for i, t := range req.Trytes {
+		//	tx, _ := giota.NewTransaction(t)
+		//	txs[i] = *tx
+		//}
+		//
+		//fmt.Println(txs)
+
+		// Get configuration.
+		provider := os.Getenv("PROVIDER")
+		minDepth, _ := strconv.ParseInt(os.Getenv("MIN_DEPTH"), 10, 64)
+		minWeightMag, _ := strconv.ParseInt(os.Getenv("MIN_WEIGHT_MAGNITUDE"), 10, 64)
+
+		// Async sendTrytes
+		api := giota.NewAPI(provider, nil)
+		_, pow := giota.GetBestPoW()
+
+		fmt.Print("Sending Transactions...\n")
+		go func() {
+			//e := giota.SendTrytes(api, minDepth, txs, minWeightMag, pow)
+			e := giota.SendTrytes(api, minDepth, []giota.Transaction(txs), minWeightMag, pow)
+			raven.CaptureError(e, nil)
+		}()
+
+		w.WriteHeader(http.StatusNoContent)
+	} else {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+	}
 }
 
 func attachHandler(w http.ResponseWriter, r *http.Request) {
