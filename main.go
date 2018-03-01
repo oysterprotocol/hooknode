@@ -24,8 +24,8 @@ import (
 )
 
 type indexRequest struct {
-	//Trytes            []giota.Trytes `json:"trytes"`
-	Trytes            []string `json:"trytes"`
+	Trytes            []giota.Trytes `json:"trytes"`
+	//Trytes            []string `json:"trytes"`
 	TrunkTransaction  giota.Trytes   `json:"trunkTransaction"`
 	BranchTransaction giota.Trytes   `json:"branchTransaction"`
 	Command           string         `json:"command"`
@@ -89,28 +89,19 @@ func attachHandler2(w http.ResponseWriter, r *http.Request) {
 		req := indexRequest{}
 		json.Unmarshal(b, &req)
 
-		for _, address := range addrs {
-			// check the address type and if it is not a loopback the display it
-			if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-				if ipnet.IP.To4() != nil {
-					return ipnet.IP.String()
-				}
-			}
-		}
-
 		// Convert []Trytes to []Transaction
 		txs := make([]giota.Transaction, len(req.Trytes))
+
 		//
-		////
-		//fmt.Println(len(req.Trytes))
-		////
+		fmt.Println(len(req.Trytes))
 		//
-		//for i, t := range req.Trytes {
-		//	tx, _ := giota.NewTransaction(t)
-		//	txs[i] = *tx
-		//}
-		//
-		//fmt.Println(txs)
+
+		for i, t := range req.Trytes {
+			tx, _ := giota.NewTransaction(t)
+			txs[i] = *tx
+		}
+
+		fmt.Println(txs)
 
 		// Get configuration.
 		provider := os.Getenv("PROVIDER")
@@ -123,8 +114,7 @@ func attachHandler2(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Print("Sending Transactions...\n")
 		go func() {
-			//e := giota.SendTrytes(api, minDepth, txs, minWeightMag, pow)
-			e := giota.SendTrytes(api, minDepth, []giota.Transaction(txs), minWeightMag, pow)
+			e := giota.SendTrytes(api, minDepth, txs, minWeightMag, pow)
 			raven.CaptureError(e, nil)
 		}()
 
