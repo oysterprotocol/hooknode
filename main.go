@@ -12,7 +12,6 @@ import (
 	"os"
 	"reflect"
 	"runtime"
-	"strconv"
 
 	"github.com/getsentry/raven-go"
 	"github.com/iotaledger/giota"
@@ -55,18 +54,18 @@ func init() {
 func main() {
 
 	// create channel
-	jobQueue := make(chan giota.Transaction)
+	// jobQueue := make(chan giota.Transaction)
 
 	// start the worker
-	go powWorker(jobQueue)
+	// go powWorker(jobQueue)
 
 	raven.CapturePanic(func() {
 
 		// Attach handlers
 		http.HandleFunc("/attach/", raven.RecoveryHandler(attachHandler))
-		http.HandleFunc("/attach2/", raven.RecoveryHandler(func(w http.ResponseWriter, r *http.Request) {
-			attachHandler2(w, r, jobQueue)
-		}))
+		// http.HandleFunc("/attach2/", raven.RecoveryHandler(func(w http.ResponseWriter, r *http.Request) {
+		// 	attachHandler2(w, r, jobQueue)
+		// }))
 		http.HandleFunc("/broadcast/", raven.RecoveryHandler(broadcastHandler))
 		http.HandleFunc("/stats/", raven.RecoveryHandler(statsHandler))
 		http.HandleFunc("/pow/", powHandler)
@@ -83,6 +82,7 @@ func main() {
 	}, nil)
 }
 
+/*
 func attachHandler2(w http.ResponseWriter, r *http.Request, jobQueue chan giota.Transaction) {
 
 	fmt.Print("\nattachHandler2\n")
@@ -167,7 +167,8 @@ func CustomSendTrytes(api *API, depth int64, trytes []Transaction, mwm int64, po
 
 	// Broadcast and store tx
 	return api.BroadcastTransactions(trytes)
-}*/
+}
+
 
 func powWorker(jobQueue <-chan giota.Transaction) {
 	for tx := range jobQueue {
@@ -176,6 +177,7 @@ func powWorker(jobQueue <-chan giota.Transaction) {
 		fmt.Println(tx)
 	}
 }
+*/
 
 func attachHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Print("\nattachHandler\n")
