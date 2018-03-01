@@ -8,7 +8,8 @@ import (
 )
 
 // SendTrytes does attachToTangle and finally, it broadcasts the transactions.
-func SendTrytes(trytes []giota.Trytes, trunk giota.Trytes, branch giota.Trytes) (err error) {
+func SendTrytes(trytes []giota.Trytes, trunk giota.Trytes, branch giota.Trytes) (
+	ts []giota.Transaction, err error) {
 	// Get configuration.
 	provider := os.Getenv("PROVIDER")
 	minDepth := int64(giota.DefaultNumberOfWalks)
@@ -42,7 +43,12 @@ func SendTrytes(trytes []giota.Trytes, trunk giota.Trytes, branch giota.Trytes) 
 	}
 
 	// Broadcast and store tx
-	return api.BroadcastTransactions(txs)
+	err = api.BroadcastTransactions(txs)
+	if err != nil {
+		return
+	}
+
+	return txs, nil
 }
 
 // Things below are copied from the giota lib since they are not public.
