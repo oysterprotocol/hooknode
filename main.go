@@ -213,30 +213,6 @@ func attachHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func attachAndBroadcastToTangle(indexReq *indexRequest) {
-	minWeightMag, _ := strconv.ParseInt(os.Getenv("MIN_WEIGHT_MAGNITUDE"), 10, 0)
-
-	// Convert []Trytes to []Transaction
-	txs := make([]giota.Transaction, len(indexReq.Trytes))
-	for i, t := range indexReq.Trytes {
-		powT, err := giota.PowSSE(t, int(minWeightMag))
-		if err != nil {
-			raven.CaptureError(err, nil)
-			return
-		}
-		tx, _ := giota.NewTransaction(powT)
-		txs[i] = *tx
-	}
-
-	// Broadcast trytes.
-
-	// Broadcast on self
-	go broadcastAndStore(&txs)
-
-	// Broadcast to other hooknodes
-	broadcastTxs(&txs, indexReq.BroadcastNodes)
-}
-
 func broadcastTxs(txs *[]giota.Transaction, nodes []string) {
 	broadcastReq := broadcastRequest{
 		Trytes: *txs,
