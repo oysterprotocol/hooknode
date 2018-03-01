@@ -17,6 +17,7 @@ import (
 	"github.com/getsentry/raven-go"
 	"github.com/iotaledger/giota"
 	"github.com/joho/godotenv"
+	"github.com/oysterprotocol/hooknode/clients"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/load"
 	"github.com/shirou/gopsutil/mem"
@@ -25,7 +26,6 @@ import (
 
 type indexRequest struct {
 	Trytes            []giota.Trytes `json:"trytes"`
-	//Trytes            []string `json:"trytes"`
 	TrunkTransaction  giota.Trytes   `json:"trunkTransaction"`
 	BranchTransaction giota.Trytes   `json:"branchTransaction"`
 	Command           string         `json:"command"`
@@ -60,8 +60,8 @@ func main() {
 	raven.CapturePanic(func() {
 
 		// Attach handlers
-		//http.HandleFunc("/attach/", raven.RecoveryHandler(attachHandler))
-		http.HandleFunc("/attach/", raven.RecoveryHandler(func(w http.ResponseWriter, r *http.Request) {
+		http.HandleFunc("/attach/", raven.RecoveryHandler(attachHandler))
+		http.HandleFunc("/attach2/", raven.RecoveryHandler(func(w http.ResponseWriter, r *http.Request) {
 			attachHandler2(w, r, jobQueue)
 		}))
 		http.HandleFunc("/broadcast/", raven.RecoveryHandler(broadcastHandler))
@@ -183,7 +183,6 @@ func powWorker(jobChan <-chan giota.Transaction) {
 
 func attachHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Print("\nattachHandler\n")
-	fmt.Print("\nProcessing trytes\n")
 
 	if r.Method == "POST" {
 
@@ -198,7 +197,12 @@ func attachHandler(w http.ResponseWriter, r *http.Request) {
 		req := indexRequest{}
 		json.Unmarshal(b, &req)
 
-		go attachAndBroadcastToTangle(&req)
+		go func() {
+			err = giotaClient.SendTrytes(req.Trytes, req.TrunkTransaction, req.BranchTransaction)
+			if err != nil {
+				raven.CaptureError(err, nil)
+			}
+		}()
 
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(successJSON())
