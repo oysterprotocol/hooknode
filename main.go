@@ -53,11 +53,17 @@ func init() {
 }
 
 func main() {
+
+	// create channel
+	jobQueue := make(chan giota.Transaction)
+
 	raven.CapturePanic(func() {
 
 		// Attach handlers
 		//http.HandleFunc("/attach/", raven.RecoveryHandler(attachHandler))
-		http.HandleFunc("/attach/", raven.RecoveryHandler(attachHandler2))
+		http.HandleFunc("/attach/", raven.RecoveryHandler(func(w http.ResponseWriter, r *http.Request) {
+			attachHandler2(w, r, jobQueue)
+		}))
 		http.HandleFunc("/broadcast/", raven.RecoveryHandler(broadcastHandler))
 		http.HandleFunc("/stats/", raven.RecoveryHandler(statsHandler))
 		http.HandleFunc("/pow/", powHandler)
@@ -72,9 +78,13 @@ func main() {
 		http.ListenAndServe(":"+port, nil)
 
 	}, nil)
+
+	// start the worker
+	go powWorker(jobQueue)
 }
 
-func attachHandler2(w http.ResponseWriter, r *http.Request) {
+func attachHandler2(w http.ResponseWriter, r *http.Request, jobQueue chan giota.Transaction) {
+
 	fmt.Print("\nattachHandler2\n")
 	fmt.Print("\nProcessing trytes\n")
 	if r.Method == "POST" {
@@ -99,9 +109,14 @@ func attachHandler2(w http.ResponseWriter, r *http.Request) {
 		for i, t := range req.Trytes {
 			tx, _ := giota.NewTransaction(t)
 			txs[i] = *tx
+			jobQueue <- txs[i]
+			// this usage assumes giota.NewTransaction is building all transactions in the array
+			// correctly.  If not, adding items to the queue may need to be done in a different part
+			// of this method
 		}
 
-		fmt.Println(txs)
+		// Everything below this line in this method will likely need to be moved
+		// to the powWorker method to process each tx one at a time
 
 		// Get configuration.
 		provider := os.Getenv("PROVIDER")
@@ -156,6 +171,14 @@ func CustomSendTrytes(api *API, depth int64, trytes []Transaction, mwm int64, po
 
 	// Broadcast and store tx
 	return api.BroadcastTransactions(trytes)
+}
+
+func powWorker(jobChan <-chan giota.Transaction) {
+	for tx := range jobChan {
+		// this is where we would call methods to deal with each tryte string
+		fmt.Println("Currently processing this tryte string:")
+		fmt.Println(tx)
+	}
 }
 
 func attachHandler(w http.ResponseWriter, r *http.Request) {
