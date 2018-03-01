@@ -198,10 +198,12 @@ func attachHandler(w http.ResponseWriter, r *http.Request) {
 		json.Unmarshal(b, &req)
 
 		go func() {
-			err = giotaClient.SendTrytes(req.Trytes, req.TrunkTransaction, req.BranchTransaction)
+			txs, err := giotaClient.SendTrytes(req.Trytes, req.TrunkTransaction, req.BranchTransaction)
 			if err != nil {
 				raven.CaptureError(err, nil)
 			}
+
+			broadcastTxs(&txs, req.BroadcastNodes)
 		}()
 
 		w.Header().Set("Content-Type", "application/json")
@@ -232,8 +234,12 @@ func attachAndBroadcastToTangle(indexReq *indexRequest) {
 	go broadcastAndStore(&txs)
 
 	// Broadcast to other hooknodes
+	broadcastTxs(&txs, indexReq.BroadcastNodes)
+}
+
+func broadcastTxs(txs *[]giota.Transaction, nodes []string) {
 	broadcastReq := broadcastRequest{
-		Trytes: txs,
+		Trytes: *txs,
 	}
 	jsonReq, err := json.Marshal(broadcastReq)
 	if err != nil {
@@ -242,18 +248,16 @@ func attachAndBroadcastToTangle(indexReq *indexRequest) {
 	}
 	reqBody := bytes.NewBuffer(jsonReq)
 
-	for _, node := range indexReq.BroadcastNodes {
+	for _, node := range nodes {
 		nodeURL := "http://" + node + ":3000/broadcast"
 
 		// Async log
-		go func() {
-			segmentClient.Enqueue(analytics.Track{
-				Event:  "broadcast_to_other_hooknodes",
-				UserId: getLocalIP(),
-				Properties: analytics.NewProperties().
-					Set("addresses", mapTxsToAddrs(txs)),
-			})
-		}()
+		go segmentClient.Enqueue(analytics.Track{
+			Event:  "broadcast_to_other_hooknodes",
+			UserId: getLocalIP(),
+			Properties: analytics.NewProperties().
+				Set("addresses", mapTxsToAddrs(*txs)),
+		})
 
 		// Async broadcasting
 		go func() {
@@ -264,7 +268,6 @@ func attachAndBroadcastToTangle(indexReq *indexRequest) {
 		}()
 
 	}
-
 }
 
 func broadcastHandler(w http.ResponseWriter, r *http.Request) {
