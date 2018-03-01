@@ -17,6 +17,7 @@ import (
 	"github.com/getsentry/raven-go"
 	"github.com/iotaledger/giota"
 	"github.com/joho/godotenv"
+	"github.com/oysterprotocol/hooknode/clients"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/load"
 	"github.com/shirou/gopsutil/mem"
@@ -25,7 +26,6 @@ import (
 
 type indexRequest struct {
 	Trytes            []giota.Trytes `json:"trytes"`
-	//Trytes            []string `json:"trytes"`
 	TrunkTransaction  giota.Trytes   `json:"trunkTransaction"`
 	BranchTransaction giota.Trytes   `json:"branchTransaction"`
 	Command           string         `json:"command"`
@@ -63,8 +63,8 @@ func main() {
 	raven.CapturePanic(func() {
 
 		// Attach handlers
-		//http.HandleFunc("/attach/", raven.RecoveryHandler(attachHandler))
-		http.HandleFunc("/attach/", raven.RecoveryHandler(func(w http.ResponseWriter, r *http.Request) {
+		http.HandleFunc("/attach/", raven.RecoveryHandler(attachHandler))
+		http.HandleFunc("/attach2/", raven.RecoveryHandler(func(w http.ResponseWriter, r *http.Request) {
 			attachHandler2(w, r, jobQueue)
 		}))
 		http.HandleFunc("/broadcast/", raven.RecoveryHandler(broadcastHandler))
@@ -187,7 +187,6 @@ func powWorker(jobQueue <-chan giota.Transaction) {
 
 func attachHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Print("\nattachHandler\n")
-	fmt.Print("\nProcessing trytes\n")
 
 	if r.Method == "POST" {
 
@@ -202,7 +201,14 @@ func attachHandler(w http.ResponseWriter, r *http.Request) {
 		req := indexRequest{}
 		json.Unmarshal(b, &req)
 
-		go attachAndBroadcastToTangle(&req)
+		go func() {
+			txs, err := giotaClient.SendTrytes(req.Trytes, req.TrunkTransaction, req.BranchTransaction)
+			if err != nil {
+				raven.CaptureError(err, nil)
+			}
+
+			broadcastTxs(&txs, req.BroadcastNodes)
+		}()
 
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(successJSON())
@@ -211,29 +217,9 @@ func attachHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func attachAndBroadcastToTangle(indexReq *indexRequest) {
-	minWeightMag, _ := strconv.ParseInt(os.Getenv("MIN_WEIGHT_MAGNITUDE"), 10, 0)
-
-	// Convert []Trytes to []Transaction
-	txs := make([]giota.Transaction, len(indexReq.Trytes))
-	for i, t := range indexReq.Trytes {
-		powT, err := giota.PowSSE(t, int(minWeightMag))
-		if err != nil {
-			raven.CaptureError(err, nil)
-			return
-		}
-		tx, _ := giota.NewTransaction(powT)
-		txs[i] = *tx
-	}
-
-	// Broadcast trytes.
-
-	// Broadcast on self
-	go broadcastAndStore(&txs)
-
-	// Broadcast to other hooknodes
+func broadcastTxs(txs *[]giota.Transaction, nodes []string) {
 	broadcastReq := broadcastRequest{
-		Trytes: txs,
+		Trytes: *txs,
 	}
 	jsonReq, err := json.Marshal(broadcastReq)
 	if err != nil {
@@ -242,18 +228,16 @@ func attachAndBroadcastToTangle(indexReq *indexRequest) {
 	}
 	reqBody := bytes.NewBuffer(jsonReq)
 
-	for _, node := range indexReq.BroadcastNodes {
+	for _, node := range nodes {
 		nodeURL := "http://" + node + ":3000/broadcast"
 
 		// Async log
-		go func() {
-			segmentClient.Enqueue(analytics.Track{
-				Event:  "broadcast_to_other_hooknodes",
-				UserId: getLocalIP(),
-				Properties: analytics.NewProperties().
-					Set("addresses", mapTxsToAddrs(txs)),
-			})
-		}()
+		go segmentClient.Enqueue(analytics.Track{
+			Event:  "broadcast_to_other_hooknodes",
+			UserId: getLocalIP(),
+			Properties: analytics.NewProperties().
+				Set("addresses", mapTxsToAddrs(*txs)),
+		})
 
 		// Async broadcasting
 		go func() {
@@ -264,7 +248,6 @@ func attachAndBroadcastToTangle(indexReq *indexRequest) {
 		}()
 
 	}
-
 }
 
 func broadcastHandler(w http.ResponseWriter, r *http.Request) {
