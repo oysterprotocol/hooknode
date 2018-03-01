@@ -2,7 +2,6 @@ package giotaClient
 
 import (
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/iotaledger/giota"
@@ -12,8 +11,10 @@ import (
 func SendTrytes(trytes []giota.Trytes, trunk giota.Trytes, branch giota.Trytes) (err error) {
 	// Get configuration.
 	provider := os.Getenv("PROVIDER")
-	minDepth, _ := strconv.ParseInt(os.Getenv("MIN_DEPTH"), 10, 64)
-	minWeightMag, _ := strconv.ParseInt(os.Getenv("MIN_WEIGHT_MAGNITUDE"), 10, 64)
+	minDepth := int64(giota.DefaultNumberOfWalks)
+	minWeightMag := int64(giota.DefaultMinWeightMagnitude)
+	// minDepth, _ := strconv.ParseInt(os.Getenv("MIN_DEPTH"), 10, 64)
+	// minWeightMag, _ := strconv.ParseInt(os.Getenv("MIN_WEIGHT_MAGNITUDE"), 10, 64)
 
 	api := giota.NewAPI(provider, nil)
 	_, powFn := giota.GetBestPoW()
@@ -25,11 +26,17 @@ func SendTrytes(trytes []giota.Trytes, trunk giota.Trytes, branch giota.Trytes) 
 		txs[i] = *tx
 	}
 
-	getTxsRes := giota.GetTransactionsToApproveResponse{
-		TrunkTransaction:  trunk,
-		BranchTransaction: branch,
+	getTxsRes, err := api.GetTransactionsToApprove(minDepth, giota.DefaultNumberOfWalks, "")
+	if err != nil {
+		return
 	}
-	err = doPow(&getTxsRes, minDepth, txs, minWeightMag, powFn)
+
+	// getTxsRes := giota.GetTransactionsToApproveResponse{
+	// 	TrunkTransaction:  trunk,
+	// 	BranchTransaction: branch,
+	// }
+
+	err = doPow(getTxsRes, minDepth, txs, minWeightMag, powFn)
 	if err != nil {
 		return
 	}
