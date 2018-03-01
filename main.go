@@ -76,26 +76,21 @@ func attachHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Print("\nattachHandler\n")
 	fmt.Print("\nProcessing trytes\n")
 
-	if r.Method == "POST" {
-
-		// Unmarshal JSON
-		b, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			raven.CaptureError(err, nil)
-			http.Error(w, "Invalid request", http.StatusBadRequest)
-			return
-		}
-		defer r.Body.Close()
-		req := indexRequest{}
-		json.Unmarshal(b, &req)
-
-		go attachAndBroadcastToTangle(&req)
-
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(successJSON())
-	} else {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+	// Unmarshal JSON
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		raven.CaptureError(err, nil)
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
 	}
+	defer r.Body.Close()
+	req := indexRequest{}
+	json.Unmarshal(b, &req)
+
+	go attachAndBroadcastToTangle(&req)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(successJSON())
 }
 
 func attachAndBroadcastToTangle(indexReq *indexRequest) {
