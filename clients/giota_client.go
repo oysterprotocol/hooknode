@@ -25,7 +25,10 @@ func SendTrytes(trytes []giota.Trytes, trunk giota.Trytes, branch giota.Trytes) 
 		txs[i] = *tx
 	}
 
-	getTxsRes := giota.GetTransactionsToApproveResponse{}
+	getTxsRes := giota.GetTransactionsToApproveResponse{
+		TrunkTransaction:  trunk,
+		BranchTransaction: branch,
+	}
 	err = doPow(&getTxsRes, minDepth, txs, minWeightMag, powFn)
 	if err != nil {
 		return
