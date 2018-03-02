@@ -59,7 +59,7 @@ func SendTrytes(trytes []giota.Trytes, trunk giota.Trytes, branch giota.Trytes) 
 const maxTimestampTrytes = "MMMMMMMMM"
 
 // This mutex was added by us.
-var mutex = sync.Mutex{}
+var mutex = &sync.Mutex{}
 
 func doPow(tra *giota.GetTransactionsToApproveResponse, depth int64,
 	trytes []giota.Transaction, mwm int64, pow giota.PowFunc) error {
