@@ -81,7 +81,7 @@ func PowWorker(jobQueue <-chan PowJob, err error) {
 			return
 		}
 
-		BroadcastTxs(&transactions, powJobRequest.BroadcastNodes)
+		go BroadcastTxs(&transactions, powJobRequest.BroadcastNodes)
 	}
 }
 
@@ -143,24 +143,16 @@ func BroadcastTxs(txs *[]giota.Transaction, nodes []string) {
 		Trytes: *txs,
 	}
 
-	//fmt.Println("broadcastReq:")
-	//fmt.Println(broadcastReq)
-
-	jsonReq, err := json.Marshal(broadcastReq)
-	if err != nil {
-		raven.CaptureError(err, nil)
-		return
-	}
-
-	//fmt.Println("jsonReq:")
-	//fmt.Println(jsonReq)
-
-	reqBody := bytes.NewBuffer(jsonReq)
-
-	//fmt.Println("reqBody:")
-	//fmt.Println(reqBody)
-
 	for _, node := range nodes {
+
+		jsonReq, err := json.Marshal(broadcastReq)
+		if err != nil {
+			raven.CaptureError(err, nil)
+			return
+		}
+
+		reqBody := bytes.NewBuffer(jsonReq)
+
 		nodeURL := "http://" + node + ":3000/broadcast/"
 
 		// Async log
