@@ -1,8 +1,3 @@
-export:
-        export GOROOT=/usr/local/go \ 
-	export GOPATH=/home/ubuntu/go \ 
-	export PATH=$GOPATH/bin:$GOROOT/bin:$PATH/
-
 install-deps:
 	go get -u github.com/golang/dep/cmd/dep \
 	&& go get github.com/codegangsta/gin \
