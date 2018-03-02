@@ -10,12 +10,14 @@ import (
 	"encoding/json"
 	"bytes"
 	"net/http"
+	"github.com/oysterprotocol/hooknode/utils"
+	"gopkg.in/segmentio/analytics-go.v3"
 
 	"github.com/getsentry/raven-go"
 )
 
 type PowJob struct {
-	Transactions     []giota.Transaction
+	Transfers        []giota.Transfer
 	TrunkTransaction giota.Trytes
 	BranchTransacion giota.Trytes
 	BroadcastNodes   []string
@@ -26,26 +28,19 @@ type broadcastRequest struct {
 }
 
 // SendTrytes does attachToTangle and finally, it broadcasts the transactions.
-func SendTrytes(trytes []giota.Trytes, trunk giota.Trytes, branch giota.Trytes, broadcastNodes []string, jobQueue chan PowJob) (
-	ts []giota.Transaction, err error) {
-
-	// Convert []Trytes to []Transaction
-	txs := make([]giota.Transaction, len(trytes))
-	for i, t := range trytes {
-		tx, _ := giota.NewTransaction(t)
-		txs[i] = *tx
-	}
+func SendTrytes(transfers []giota.Transfer, trunk giota.Trytes, branch giota.Trytes, broadcastNodes []string, jobQueue chan PowJob) (
+	err error) {
 
 	powJobRequest := PowJob{
 		BranchTransacion: branch,
 		TrunkTransaction: trunk,
-		Transactions:     txs,
+		Transfers:        transfers,
 		BroadcastNodes:   broadcastNodes,
 	}
 
 	jobQueue <- powJobRequest
 
-	return txs, nil
+	return nil
 }
 
 func PowWorker(jobQueue <-chan PowJob, err error) {
@@ -58,20 +53,35 @@ func PowWorker(jobQueue <-chan PowJob, err error) {
 		minWeightMag := int64(giota.DefaultMinWeightMagnitude)
 
 		api := giota.NewAPI(provider, nil)
+		_, pow := giota.GetBestPoW()
 
-		err = doPow(powJobRequest.BranchTransacion, powJobRequest.TrunkTransaction, minDepth, powJobRequest.Transactions, minWeightMag)
+		var seed giota.Trytes
+		seed = "OYSTERPRLOYSTERPRLOYSTERPRLOYSTERPRLOYSTERPRLOYSTERPRLOYSTERPRLOYSTERPRLOYSTERPRL"
+
+		var bdl giota.Bundle
+
+		bdl, err = giota.PrepareTransfers(api, seed, powJobRequest.Transfers, nil, "", 2)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(-1)
+		}
+
+		transactions := []giota.Transaction(bdl)
+
+		err = doPow(powJobRequest.BranchTransacion, powJobRequest.TrunkTransaction, minDepth, transactions, minWeightMag, pow)
 
 		if err != nil {
 			return
 		}
 
 		// Broadcast and store tx
-		err = api.BroadcastTransactions(powJobRequest.Transactions)
+
+		err = api.BroadcastTransactions(transactions)
 		if err != nil {
 			return
 		}
 
-		BroadcastTxs(&powJobRequest.Transactions, powJobRequest.BroadcastNodes)
+		BroadcastTxs(&transactions, powJobRequest.BroadcastNodes)
 	}
 }
 
@@ -85,10 +95,11 @@ const maxTimestampTrytes = "MMMMMMMMM"
 var mutex = &sync.Mutex{}
 
 func doPow(branch giota.Trytes, trunk giota.Trytes, depth int64,
-	trytes []giota.Transaction, mwm int64) error {
+	trytes []giota.Transaction, mwm int64, pow giota.PowFunc) error {
 
 	var prev giota.Trytes
 	var err error
+
 	for i := len(trytes) - 1; i >= 0; i-- {
 		switch {
 		case i == len(trytes)-1:
@@ -106,7 +117,7 @@ func doPow(branch giota.Trytes, trunk giota.Trytes, depth int64,
 
 		// We customized this to lock here.
 		mutex.Lock()
-		trytes[i].Nonce, err = giota.PowC(trytes[i].Trytes(), int(mwm))
+		trytes[i].Nonce, err = pow(trytes[i].Trytes(), int(mwm))
 		mutex.Unlock()
 
 		if err != nil {
@@ -115,6 +126,15 @@ func doPow(branch giota.Trytes, trunk giota.Trytes, depth int64,
 
 		prev = trytes[i].Hash()
 	}
+
+	// Async log
+	go oysterUtils.SegmentClient.Enqueue(analytics.Track{
+		Event:  "performed_pow",
+		UserId: oysterUtils.GetLocalIP(),
+		Properties: analytics.NewProperties().
+			Set("addresses", oysterUtils.MapTransactionsToAddrs(trytes)),
+	})
+
 	return nil
 }
 
@@ -122,23 +142,34 @@ func BroadcastTxs(txs *[]giota.Transaction, nodes []string) {
 	broadcastReq := broadcastRequest{
 		Trytes: *txs,
 	}
+
+	//fmt.Println("broadcastReq:")
+	//fmt.Println(broadcastReq)
+
 	jsonReq, err := json.Marshal(broadcastReq)
 	if err != nil {
 		raven.CaptureError(err, nil)
 		return
 	}
+
+	//fmt.Println("jsonReq:")
+	//fmt.Println(jsonReq)
+
 	reqBody := bytes.NewBuffer(jsonReq)
+
+	//fmt.Println("reqBody:")
+	//fmt.Println(reqBody)
 
 	for _, node := range nodes {
 		nodeURL := "http://" + node + ":3000/broadcast/"
 
 		// Async log
-		// go segmentClient.Enqueue(analytics.Track{
-		// 	Event:  "broadcast_to_other_hooknodes",
-		// 	UserId: getLocalIP(),
-		// 	Properties: analytics.NewProperties().
-		// 		Set("addresses", mapTxsToAddrs(*txs)),
-		// })
+		 go oysterUtils.SegmentClient.Enqueue(analytics.Track{
+		 	Event:  "broadcast_to_other_hooknodes",
+		 	UserId: oysterUtils.GetLocalIP(),
+		 	Properties: analytics.NewProperties().
+		 		Set("addresses", oysterUtils.MapTransactionsToAddrs(*txs)),
+		 })
 
 		// Async broadcasting
 		go func() {

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"reflect"
@@ -16,6 +15,7 @@ import (
 	"github.com/iotaledger/giota"
 	"github.com/joho/godotenv"
 	"github.com/oysterprotocol/hooknode/clients"
+	"github.com/oysterprotocol/hooknode/utils"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/load"
 	"github.com/shirou/gopsutil/mem"
@@ -34,8 +34,6 @@ type broadcastRequest struct {
 	Trytes []giota.Transaction `json:"trytes"`
 }
 
-var segmentClient analytics.Client
-
 func init() {
 	// Load ENV variables
 	err := godotenv.Load()
@@ -45,9 +43,6 @@ func init() {
 
 	// Setup sentry
 	raven.SetDSN(os.Getenv("SENTRY_DSN"))
-
-	// Setup Segment
-	segmentClient = analytics.New(os.Getenv("SEGMENT_WRITE_KEY"))
 }
 
 func main() {
@@ -98,6 +93,14 @@ func attachHandler(w http.ResponseWriter, r *http.Request, jobQueue chan giotaCl
 		req := indexRequest{}
 		json.Unmarshal(b, &req)
 
+		// Async log
+		go oysterUtils.SegmentClient.Enqueue(analytics.Track{
+			Event:  "received_transfers",
+			UserId: oysterUtils.GetLocalIP(),
+			Properties: analytics.NewProperties().
+				Set("addresses", oysterUtils.MapTransfersToAddrs(req.Transfers)),
+		})
+
 		go func() {
 			err := giotaClient.SendTrytes(req.Transfers, req.TrunkTransaction, req.BranchTransaction, req.BroadcastNodes, jobQueue)
 			if err != nil {
@@ -114,10 +117,6 @@ func attachHandler(w http.ResponseWriter, r *http.Request, jobQueue chan giotaCl
 
 func broadcastHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Print("\nbrodcastHandler\n")
-
-	// HACK: Using sentry for logs.
-	err := errors.New("/broadcast")
-	go raven.CaptureError(err, nil)
 
 	// Unmarshal JSON
 	b, err := ioutil.ReadAll(r.Body)
@@ -140,13 +139,13 @@ func broadcastAndStore(txs *[]giota.Transaction) {
 	provider := os.Getenv("PROVIDER")
 	api := giota.NewAPI(provider, nil)
 
-	// Async log
-	// go segmentClient.Enqueue(analytics.Track{
-	// 	Event:  "broadcast_transactions",
-	// 	UserId: getLocalIP(),
-	// 	Properties: analytics.NewProperties().
-	// 		Set("addresses", mapTxsToAddrs(*txs)),
-	// })
+	 //Async log
+	 go oysterUtils.SegmentClient.Enqueue(analytics.Track{
+	 	Event:  "broadcast_transactions",
+	 	UserId: oysterUtils.GetLocalIP(),
+	 	Properties: analytics.NewProperties().
+	 		Set("addresses", oysterUtils.MapTransactionsToAddrs(*txs)),
+	 })
 
 	// Broadcast
 	err := api.BroadcastTransactions(*txs)
@@ -156,12 +155,12 @@ func broadcastAndStore(txs *[]giota.Transaction) {
 	}
 
 	// Async log
-	// go segmentClient.Enqueue(analytics.Track{
-	// 	Event:  "store_transactions",
-	// 	UserId: getLocalIP(),
-	// 	Properties: analytics.NewProperties().
-	// 		Set("addresses", mapTxsToAddrs(*txs)),
-	// })
+	 go oysterUtils.SegmentClient.Enqueue(analytics.Track{
+	 	Event:  "store_transactions",
+	 	UserId: oysterUtils.GetLocalIP(),
+	 	Properties: analytics.NewProperties().
+	 		Set("addresses", oysterUtils.MapTransactionsToAddrs(*txs)),
+	 })
 
 	// Store
 	err = api.StoreTransactions(*txs)
@@ -239,29 +238,5 @@ func versionHandler(w http.ResponseWriter, r *http.Request) {
 
 func successJSON() (res []byte) {
 	res, _ = json.Marshal(map[string]bool{"success": true})
-	return
-}
-
-func getLocalIP() string {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		return ""
-	}
-	for _, address := range addrs {
-		// check the address type and if it is not a loopback the display it
-		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				return ipnet.IP.String()
-			}
-		}
-	}
-	return ""
-}
-
-func mapTxsToAddrs(txs []giota.Transaction) (addrs []giota.Address) {
-	for i, tx := range txs {
-		addrs[i] = tx.Address
-	}
-
 	return
 }
