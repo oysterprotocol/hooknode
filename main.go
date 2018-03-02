@@ -226,12 +226,12 @@ func broadcastTxs(txs *[]giota.Transaction, nodes []string) {
 		nodeURL := "http://" + node + ":3000/broadcast/"
 
 		// Async log
-		go segmentClient.Enqueue(analytics.Track{
-			Event:  "broadcast_to_other_hooknodes",
-			UserId: getLocalIP(),
-			Properties: analytics.NewProperties().
-				Set("addresses", mapTxsToAddrs(*txs)),
-		})
+		// go segmentClient.Enqueue(analytics.Track{
+		// 	Event:  "broadcast_to_other_hooknodes",
+		// 	UserId: getLocalIP(),
+		// 	Properties: analytics.NewProperties().
+		// 		Set("addresses", mapTxsToAddrs(*txs)),
+		// })
 
 		// Async broadcasting
 		go func() {
@@ -273,14 +273,12 @@ func broadcastAndStore(txs *[]giota.Transaction) {
 	api := giota.NewAPI(provider, nil)
 
 	// Async log
-	go func() {
-		segmentClient.Enqueue(analytics.Track{
-			Event:  "broadcast_transactions",
-			UserId: getLocalIP(),
-			Properties: analytics.NewProperties().
-				Set("addresses", mapTxsToAddrs(*txs)),
-		})
-	}()
+	// go segmentClient.Enqueue(analytics.Track{
+	// 	Event:  "broadcast_transactions",
+	// 	UserId: getLocalIP(),
+	// 	Properties: analytics.NewProperties().
+	// 		Set("addresses", mapTxsToAddrs(*txs)),
+	// })
 
 	// Broadcast
 	err := api.BroadcastTransactions(*txs)
@@ -290,14 +288,12 @@ func broadcastAndStore(txs *[]giota.Transaction) {
 	}
 
 	// Async log
-	go func() {
-		segmentClient.Enqueue(analytics.Track{
-			Event:  "store_transactions",
-			UserId: getLocalIP(),
-			Properties: analytics.NewProperties().
-				Set("addresses", mapTxsToAddrs(*txs)),
-		})
-	}()
+	// go segmentClient.Enqueue(analytics.Track{
+	// 	Event:  "store_transactions",
+	// 	UserId: getLocalIP(),
+	// 	Properties: analytics.NewProperties().
+	// 		Set("addresses", mapTxsToAddrs(*txs)),
+	// })
 
 	// Store
 	err = api.StoreTransactions(*txs)
