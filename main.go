@@ -23,11 +23,11 @@ import (
 )
 
 type indexRequest struct {
-	Trytes            []giota.Trytes `json:"trytes"`
-	TrunkTransaction  giota.Trytes   `json:"trunkTransaction"`
-	BranchTransaction giota.Trytes   `json:"branchTransaction"`
-	Command           string         `json:"command"`
-	BroadcastNodes    []string       `json:"broadcastingNodes"`
+	Transfers         []giota.Transfer `json:"transfers"`
+	TrunkTransaction  giota.Trytes     `json:"trunkTransaction"`
+	BranchTransaction giota.Trytes     `json:"branchTransaction"`
+	Command           string           `json:"command"`
+	BroadcastNodes    []string         `json:"broadcastingNodes"`
 }
 
 type broadcastRequest struct {
@@ -99,7 +99,7 @@ func attachHandler(w http.ResponseWriter, r *http.Request, jobQueue chan giotaCl
 		json.Unmarshal(b, &req)
 
 		go func() {
-			_, err := giotaClient.SendTrytes(req.Trytes, req.TrunkTransaction, req.BranchTransaction, req.BroadcastNodes, jobQueue)
+			err := giotaClient.SendTrytes(req.Transfers, req.TrunkTransaction, req.BranchTransaction, req.BroadcastNodes, jobQueue)
 			if err != nil {
 				raven.CaptureError(err, nil)
 			}
