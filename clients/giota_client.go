@@ -19,7 +19,7 @@ func SendTrytes(trytes []giota.Trytes, trunk giota.Trytes, branch giota.Trytes) 
 	// minWeightMag, _ := strconv.ParseInt(os.Getenv("MIN_WEIGHT_MAGNITUDE"), 10, 64)
 
 	api := giota.NewAPI(provider, nil)
-	_, powFn := giota.GetBestPoW()
+	// _, powFn := giota.GetBestPoW()
 
 	// Convert []Trytes to []Transaction
 	txs := make([]giota.Transaction, len(trytes))
@@ -38,10 +38,22 @@ func SendTrytes(trytes []giota.Trytes, trunk giota.Trytes, branch giota.Trytes) 
 	// 	BranchTransaction: branch,
 	// }
 
-	err = doPow(getTxsRes, minDepth, txs, minWeightMag, powFn)
+	// err = doPow(getTxsRes, minDepth, txs, minWeightMag, powFn)
+	// if err != nil {
+	// 	return
+	// }
+
+	at := giota.AttachToTangleRequest{
+		TrunkTransaction:   getTxsRes.TrunkTransaction,
+		BranchTransaction:  getTxsRes.BranchTransaction,
+		MinWeightMagnitude: minWeightMag,
+		Trytes:             txs,
+	}
+	attached, err := api.AttachToTangle(&at)
 	if err != nil {
 		return
 	}
+	txs = attached.Trytes
 
 	// Broadcast and store tx
 	err = api.BroadcastTransactions(txs)
