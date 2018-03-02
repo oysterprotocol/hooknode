@@ -223,7 +223,7 @@ func broadcastTxs(txs *[]giota.Transaction, nodes []string) {
 	reqBody := bytes.NewBuffer(jsonReq)
 
 	for _, node := range nodes {
-		nodeURL := "http://" + node + ":3000/broadcast"
+		nodeURL := "http://" + node + ":3000/broadcast/"
 
 		// Async log
 		go segmentClient.Enqueue(analytics.Track{
