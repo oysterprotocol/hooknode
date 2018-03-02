@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -54,18 +53,19 @@ func init() {
 func main() {
 
 	// create channel
-	// jobQueue := make(chan giota.Transaction)
+	jobQueue := make(chan giotaClient.PowJob)
+
+	var err error;
 
 	// start the worker
-	// go powWorker(jobQueue)
+	go giotaClient.PowWorker(jobQueue, err)
 
 	raven.CapturePanic(func() {
 
 		// Attach handlers
-		http.HandleFunc("/attach/", raven.RecoveryHandler(attachHandler))
-		// http.HandleFunc("/attach2/", raven.RecoveryHandler(func(w http.ResponseWriter, r *http.Request) {
-		// 	attachHandler2(w, r, jobQueue)
-		// }))
+		http.HandleFunc("/attach/", raven.RecoveryHandler(func(w http.ResponseWriter, r *http.Request) {
+			attachHandler(w, r, jobQueue)
+		}))
 		http.HandleFunc("/broadcast/", raven.RecoveryHandler(broadcastHandler))
 		http.HandleFunc("/stats/", raven.RecoveryHandler(statsHandler))
 		http.HandleFunc("/pow/", powHandler)
@@ -82,104 +82,7 @@ func main() {
 	}, nil)
 }
 
-/*
-func attachHandler2(w http.ResponseWriter, r *http.Request, jobQueue chan giota.Transaction) {
-
-	fmt.Print("\nattachHandler2\n")
-	fmt.Print("\nProcessing trytes\n")
-	if r.Method == "POST" {
-
-		// Unmarshal JSON
-		b, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			http.Error(w, "Invalid request method", http.StatusBadRequest)
-			return
-		}
-		defer r.Body.Close()
-		req := indexRequest{}
-
-		json.Unmarshal(b, &req)
-
-		// Convert []Trytes to []Transaction
-		txs := make([]giota.Transaction, len(req.Trytes))
-
-		for i, t := range req.Trytes {
-			tx, _ := giota.NewTransaction(t)
-			txs[i] = *tx
-			// this usage assumes giota.NewTransaction is building all transactions in the array
-			// correctly.  If not, adding items to the queue may need to be done in a different part
-			// of this method
-		}
-
-		// Everything below this line in this method will likely need to be moved
-		// to the powWorker method to process each tx one at a time
-
-		// Get configuration.
-		provider := os.Getenv("PROVIDER")
-		minDepth, _ := strconv.ParseInt(os.Getenv("MIN_DEPTH"), 10, 64)
-		minWeightMag, _ := strconv.ParseInt(os.Getenv("MIN_WEIGHT_MAGNITUDE"), 10, 64)
-
-		// Async sendTrytes
-		api := giota.NewAPI(provider, nil)
-		_, pow := giota.GetBestPoW()
-
-		fmt.Print("Sending Transactions...\n")
-		go func() {
-			e := CustomSendTrytes(api, minDepth, txs, minWeightMag, pow)
-			raven.CaptureError(e, nil)
-		}()
-
-		w.WriteHeader(http.StatusNoContent)
-	} else {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-	}
-}
-
-// SendTrytes does attachToTangle and finally, it broadcasts the transactions.
-func CustomSendTrytes(api *API, depth int64, trytes []Transaction, mwm int64, pow PowFunc) error {
-	tra, err := api.GetTransactionsToApprove(depth, DefaultNumberOfWalks, "")
-	if err != nil {
-		return err
-	}
-
-	switch {
-	case pow == nil:
-		at := AttachToTangleRequest{
-			TrunkTransaction:   tra.TrunkTransaction,
-			BranchTransaction:  tra.BranchTransaction,
-			MinWeightMagnitude: mwm,
-			Trytes:             trytes,
-		}
-
-		// attach to tangle - do pow
-		attached, err := api.AttachToTangle(&at)
-		if err != nil {
-			return err
-		}
-
-		trytes = attached.Trytes
-	default:
-		err := doPow(tra, depth, trytes, mwm, pow)
-		if err != nil {
-			return err
-		}
-	}
-
-	// Broadcast and store tx
-	return api.BroadcastTransactions(trytes)
-}
-
-
-func powWorker(jobQueue <-chan giota.Transaction) {
-	for tx := range jobQueue {
-		// this is where we would call methods to deal with each tryte string
-		fmt.Println("Currently processing this tryte string:")
-		fmt.Println(tx)
-	}
-}
-*/
-
-func attachHandler(w http.ResponseWriter, r *http.Request) {
+func attachHandler(w http.ResponseWriter, r *http.Request, jobQueue chan giotaClient.PowJob) {
 	fmt.Print("\nattachHandler\n")
 
 	if r.Method == "POST" {
@@ -196,51 +99,16 @@ func attachHandler(w http.ResponseWriter, r *http.Request) {
 		json.Unmarshal(b, &req)
 
 		go func() {
-			txs, err := giotaClient.SendTrytes(req.Trytes, req.TrunkTransaction, req.BranchTransaction)
+			_, err := giotaClient.SendTrytes(req.Trytes, req.TrunkTransaction, req.BranchTransaction, req.BroadcastNodes, jobQueue)
 			if err != nil {
 				raven.CaptureError(err, nil)
 			}
-
-			broadcastTxs(&txs, req.BroadcastNodes)
 		}()
 
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(successJSON())
 	} else {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-	}
-}
-
-func broadcastTxs(txs *[]giota.Transaction, nodes []string) {
-	broadcastReq := broadcastRequest{
-		Trytes: *txs,
-	}
-	jsonReq, err := json.Marshal(broadcastReq)
-	if err != nil {
-		raven.CaptureError(err, nil)
-		return
-	}
-	reqBody := bytes.NewBuffer(jsonReq)
-
-	for _, node := range nodes {
-		nodeURL := "http://" + node + ":3000/broadcast/"
-
-		// Async log
-		// go segmentClient.Enqueue(analytics.Track{
-		// 	Event:  "broadcast_to_other_hooknodes",
-		// 	UserId: getLocalIP(),
-		// 	Properties: analytics.NewProperties().
-		// 		Set("addresses", mapTxsToAddrs(*txs)),
-		// })
-
-		// Async broadcasting
-		go func() {
-			_, err := http.Post(nodeURL, "application/json", reqBody)
-			if err != nil {
-				raven.CaptureError(err, nil)
-			}
-		}()
-
 	}
 }
 
