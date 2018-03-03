@@ -75,10 +75,26 @@ func PowWorker(jobQueue <-chan PowJob, err error) {
 		}
 
 		// Broadcast and store tx
-
-		err = api.BroadcastTransactions(transactions)
-		if err != nil {
-			return
+		//go func() {
+		//	err = api.BroadcastTransactions(powJobRequest.Transactions)
+		//	if err != nil {
+		//
+		//		// Async log
+		//		go oysterUtils.SegmentClient.Enqueue(analytics.Track{
+		//			Event:  "invalid_transaction_hash",
+		//			UserId: oysterUtils.GetLocalIP(),
+		//			Properties: analytics.NewProperties().
+		//				Set("addresses", oysterUtils.MapTransactionsToAddrs(powJobRequest.Transactions)),
+		//		})
+		//
+		//		raven.CaptureError(err, nil)
+		//
+		//		// this return statement seems to cause the job request to stay in the
+		//		// channel.  We should leave this here in case of invalid hashes.
+		//		return
+		//	} else {
+		//		BroadcastTxs(&powJobRequest.Transactions, powJobRequest.BroadcastNodes)
+		//	}
 		}
 
 		go BroadcastTxs(&transactions, powJobRequest.BroadcastNodes)
