@@ -7,6 +7,7 @@ import (
 	"gopkg.in/segmentio/analytics-go.v3"
 	"log"
 	"net"
+	"time"
 )
 
 var SegmentClient analytics.Client
@@ -59,4 +60,15 @@ func GetLocalIP() string {
 		}
 	}
 	return ""
+}
+
+func TimeTrack(start time.Time, name string, properties analytics.Properties) {
+	elapsed := time.Since(start).Seconds()
+
+	go SegmentClient.Enqueue(analytics.Track{
+		Event:  name,
+		UserId: GetLocalIP(),
+		Properties: properties.
+			Set("time_elapsed", elapsed),
+	})
 }

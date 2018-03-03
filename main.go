@@ -10,7 +10,6 @@ import (
 	"os"
 	"reflect"
 	"runtime"
-
 	"github.com/getsentry/raven-go"
 	"github.com/iotaledger/giota"
 	"github.com/joho/godotenv"
@@ -20,6 +19,7 @@ import (
 	"github.com/shirou/gopsutil/load"
 	"github.com/shirou/gopsutil/mem"
 	"gopkg.in/segmentio/analytics-go.v3"
+	"time"
 )
 
 type indexRequest struct {
@@ -116,7 +116,7 @@ func attachHandler(w http.ResponseWriter, r *http.Request, jobQueue chan giotaCl
 }
 
 func broadcastHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Print("\nbrodcastHandler\n")
+	fmt.Print("\nbroadcastHandler\n")
 
 	// Unmarshal JSON
 	b, err := ioutil.ReadAll(r.Body)
@@ -139,45 +139,38 @@ func broadcastAndStore(txs *[]giota.Transaction) {
 	provider := os.Getenv("PROVIDER")
 	api := giota.NewAPI(provider, nil)
 
-	 //Async log
-	 go oysterUtils.SegmentClient.Enqueue(analytics.Track{
-	 	Event:  "broadcast_transactions",
-	 	UserId: oysterUtils.GetLocalIP(),
-	 	Properties: analytics.NewProperties().
-	 		Set("addresses", oysterUtils.MapTransactionsToAddrs(*txs)),
-	 })
+	 go func(txs *[]giota.Transaction) {
+		 defer oysterUtils.TimeTrack(time.Now(), "broadcast_external_transactions", analytics.NewProperties().
+			 Set("addresses", oysterUtils.MapTransactionsToAddrs(*txs)))
 
-	// Broadcast
-	err := api.BroadcastTransactions(*txs)
-	if err != nil {
-		raven.CaptureError(err, nil)
+		 // Broadcast
+		 err := api.BroadcastTransactions(*txs)
+		 if err != nil {
+			 raven.CaptureError(err, nil)
+		 }
+		 return
+	 }(txs)
+
+	go func(txs *[]giota.Transaction) {
+		defer oysterUtils.TimeTrack(time.Now(), "store_external_transactions", analytics.NewProperties().
+			Set("addresses", oysterUtils.MapTransactionsToAddrs(*txs)))
+
+		// Store
+		err := api.StoreTransactions(*txs)
+		if err != nil {
+			raven.CaptureError(err, nil)
+		}
 		return
-	}
-
-	// Async log
-	 go oysterUtils.SegmentClient.Enqueue(analytics.Track{
-	 	Event:  "store_transactions",
-	 	UserId: oysterUtils.GetLocalIP(),
-	 	Properties: analytics.NewProperties().
-	 		Set("addresses", oysterUtils.MapTransactionsToAddrs(*txs)),
-	 })
-
-	// Store
-	err = api.StoreTransactions(*txs)
-	if err != nil {
-		raven.CaptureError(err, nil)
-		return
-	}
+	}(txs)
 }
 
 func powHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Print("\npowHandler\n")
 
-	_, pow := giota.GetBestPoW()
+	powName, _ := giota.GetBestPoW()
 
-	// TODO: Figure out how to print the func name.
 	body, err :=
-		json.Marshal(map[string]interface{}{"powAlgo": getFuncName(pow)})
+		json.Marshal(map[string]interface{}{"powAlgo": powName})
 
 	if err != nil {
 		http.Error(w, err.Error(), 500)
