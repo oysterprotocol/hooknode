@@ -223,7 +223,8 @@ func BroadcastTxs(txs *[]giota.Transaction, nodes []string) {
 		nodeURL := "http://" + node + ":3000/broadcast/"
 
 		go func() {
-			_, err := http.Post(nodeURL, "application/json", reqBody)
+			res, err := http.Post(nodeURL, "application/json", reqBody)
+			defer res.Body.Close()
 			if err != nil {
 				raven.CaptureError(err, nil)
 			}
